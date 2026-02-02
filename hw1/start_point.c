@@ -2,7 +2,7 @@
 Assignment:
 vm.c - Implement a P-machine virtual machine
 
-Authors: <Arav Tulsi>
+Authors: <Arav Tulsi, Latrell>
 
 Language: C (only)
 
@@ -66,6 +66,7 @@ int main(int argc, char *argv[])
     }
 
     //Fetch Cycle
+        //Copy current instruction from pas to IR
     IR[0] = pas[PC]; //OP
     IR[1] = pas[PC + 1]; //L
     IR[2] = pas[PC + 2]; //M
