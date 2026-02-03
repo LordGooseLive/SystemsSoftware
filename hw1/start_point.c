@@ -113,27 +113,62 @@ int main(int argc, char *argv[])
                     break;
                 }
                 case 1: //NEG
-
-                case 2; //ADD
-
-                case 3; //SUB
-
-                case 4; //MULT
-
-                case 5; //DIV
-
-                case 6; //EQUAL
-
-                case 7; //INEQUAL
-
-                case 8; //LESS-THAN
-
-                case 9; //LESS-THAN/EQUAL
-
-                case 10; //GREATER-THAN
-
-                case 11; //GREATER-THAN/EQUAL
-
+                {
+                    pas[SP] = 0 - pas[SP];
+                    break;
+                }
+                case 2: //ADD
+                {
+                    pas[SP-1] = pas[SP-1] + pas[SP];
+                    SP = SP - 1;
+                    break;
+                }
+                case 3: //SUB
+                {
+                    pas[SP-1] = pas[SP-1] - pas[SP];
+                    SP = SP - 1;
+                    break;
+                }
+                case 4: //MULT
+                {
+                    pas[SP-1] = pas[SP-1] * pas[SP];
+                    SP = SP - 1;
+                }
+                case 5: //DIV
+                {
+                    pas[SP-1] = pas[SP-1] / pas[SP];
+                    SP = SP - 1;
+                }
+                case 6: //EQUAL
+                {
+                    pas[SP-1] = (pas[SP-1] == pas[SP]);
+                    SP = SP - 1;
+                }
+                case 7: //INEQUAL
+                {
+                    pas[SP-1] = (pas[SP-1] != pas[SP]);
+                    SP = SP - 1;
+                }
+                case 8: //LESS-THAN
+                {
+                    pas[SP-1] = (pas[SP-1] < pas[SP]);
+                    SP = SP - 1;
+                }
+                case 9: //LESS-THAN/EQUAL
+                {
+                    pas[SP-1] = (pas[SP-1] <= pas[SP]);
+                    SP = SP - 1;
+                }
+                case 10: //GREATER-THAN
+                {
+                    pas[SP-1] = (pas[SP-1] > pas[SP]);
+                    SP = SP - 1;
+                }
+                case 11: //GREATER-THAN/EQUAL
+                {
+                    pas[SP-1] = (pas[SP-1] >= pas[SP]);
+                    SP = SP - 1;
+                }
             }
         }
         else //everything other than OPR
