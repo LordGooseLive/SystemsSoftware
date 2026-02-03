@@ -48,6 +48,16 @@ void print (void);
 
 int main(int argc, char *argv[])
 {
+
+    //Variable Declaration
+        // putting all instructions from file into PAS
+    int index = 0;
+    int op = 0;
+    int l = 0;
+    int m = 0;
+        //others
+    int temp = 0;
+
     printf("argc = %d\n", argc);
 
     for (int i = 0; i < argc; i++)
@@ -75,12 +85,6 @@ int main(int argc, char *argv[])
         printf("Try: ./00_args 123\n");
         return 1;
     }
-
-    // putting all instructions from file into PAS
-    int index = 0;
-    int op = 0;
-    int l = 0;
-    int m = 0;
 
     while(fscanf(file, "%d %d %d", &op, &l, &m) == 3)
     {
@@ -187,18 +191,26 @@ int main(int argc, char *argv[])
         {
             switch (ir[2]) //M
             {
-                case 1:
+                case 1: //OutputInt
                 {
+                    printf("%d\n", pas[sp]);
+                    sp++
                     break;
                 }
                 
-                case 2:
+                case 2: //ReadInt
                 {
+                    sp--;
+                    printf("Please enter an integer: ");
+                    scanf("%d", &temp);
+                    printf("\n Input accepted.\n");
+                    pas[sp] = temp;
                     break;
                 }
                 
-                case 3:
+                case 3: //Halt
                 {
+                    stopCycle = 1;
                     break;
                 }
 
@@ -230,27 +242,40 @@ int main(int argc, char *argv[])
 
                 case 4: //STO
                 {
-                    pas
+                    pas[base(ir[1])+ir[2]] = pas[sp];
+                    sp++;
                     break;
                 }
 
                 case 5: //CAL
                 {
+                    pas[sp-1] = base(ir[1]);
+                    pas[sp-2] = bp;
+                    pas[sp-3] = pc;
+                    pb = sp-1;
+                    pc = ir[2];
                     break;
                 }
 
                 case 6: //INC
                 {
+                    sp -= ir[2];
                     break;
                 }
 
                 case 7: //JMP
                 {
+                    pc = ir[2]
                     break;
                 }
 
                 case 8: //JPC
                 {
+                    if (pas[sp]==0) 
+                    {
+                        pc = ir[2];
+                    }
+                    sp++;
                     break;
                 }
 
