@@ -97,14 +97,14 @@ int main(int argc, char *argv[])
     int stopCycle = 0;
 
     while(!stopCycle){
-        //Fetch Cycle
-            //Copy current instruction from pas to IR
+        // Fetch Cycle
+            // Copy current instruction from pas to IR
         IR[0] = pas[PC]; //OP
         IR[1] = pas[PC + 1]; //L
         IR[2] = pas[PC + 2]; //M
         PC += 3; //Increment PC
 
-        //Execute Cycle
+        // Execute Cycle
         if(IR[0] == 2) //OPR
         {
             switch (IR[2]) //M
@@ -117,27 +117,62 @@ int main(int argc, char *argv[])
                     break;
                 }
                 case 1: //NEG
-
-                case 2; //ADD
-
-                case 3; //SUB
-
-                case 4; //MULT
-
-                case 5; //DIV
-
-                case 6; //EQUAL
-
-                case 7; //INEQUAL
-
-                case 8; //LESS-THAN
-
-                case 9; //LESS-THAN/EQUAL
-
-                case 10; //GREATER-THAN
-
-                case 11; //GREATER-THAN/EQUAL
-
+                {
+                    pas[SP] = 0 - pas[SP];
+                    break;
+                }
+                case 2: //ADD
+                {
+                    pas[SP-1] = pas[SP-1] + pas[SP];
+                    SP = SP - 1;
+                    break;
+                }
+                case 3: //SUB
+                {
+                    pas[SP-1] = pas[SP-1] - pas[SP];
+                    SP = SP - 1;
+                    break;
+                }
+                case 4: //MULT
+                {
+                    pas[SP-1] = pas[SP-1] * pas[SP];
+                    SP = SP - 1;
+                }
+                case 5: //DIV
+                {
+                    pas[SP-1] = pas[SP-1] / pas[SP];
+                    SP = SP - 1;
+                }
+                case 6: //EQUAL
+                {
+                    pas[SP-1] = (pas[SP-1] == pas[SP]);
+                    SP = SP - 1;
+                }
+                case 7: //INEQUAL
+                {
+                    pas[SP-1] = (pas[SP-1] != pas[SP]);
+                    SP = SP - 1;
+                }
+                case 8: //LESS-THAN
+                {
+                    pas[SP-1] = (pas[SP-1] < pas[SP]);
+                    SP = SP - 1;
+                }
+                case 9: //LESS-THAN/EQUAL
+                {
+                    pas[SP-1] = (pas[SP-1] <= pas[SP]);
+                    SP = SP - 1;
+                }
+                case 10: //GREATER-THAN
+                {
+                    pas[SP-1] = (pas[SP-1] > pas[SP]);
+                    SP = SP - 1;
+                }
+                case 11: //GREATER-THAN/EQUAL
+                {
+                    pas[SP-1] = (pas[SP-1] >= pas[SP]);
+                    SP = SP - 1;
+                }
             }
         }
         else //everything other than OPR
@@ -180,8 +215,11 @@ int base (int l)
     }
     return arb;
 }
+<<<<<<< HEAD:hw1/start_point.c
 
 void print(void)
 {
 
 }
+=======
+>>>>>>> 1f440e64a0796aa312571c9e9f73b5fbd15bb5e1:hw1/vm.c
