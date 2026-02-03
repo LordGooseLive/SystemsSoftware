@@ -41,6 +41,10 @@ int SP = 481; //Stack Pointer; grows downwards
 int IR [3] = {0, 0, 0};   //Instruction Register
 int pas [500] = {0}; // Programme Address Space
 
+//prototypes
+int base (int l);
+void print (void);
+
 
 int main(int argc, char *argv[])
 {
@@ -140,6 +144,25 @@ int main(int argc, char *argv[])
         {
             switch (IR[0]) //OP
             {
+                case 1: //LIT
+                {
+                    break;
+                }
+
+                case 2: //OPR
+                {
+                    break;
+                }
+
+                case 3: //
+                {
+                    break;
+                }
+
+                case 4:
+                {
+                    break;
+                }
             }
         }
     }
@@ -156,4 +179,9 @@ int base (int l)
         l--;
     }
     return arb;
+}
+
+void print(void)
+{
+
 }
