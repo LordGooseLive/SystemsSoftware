@@ -2,7 +2,7 @@
 Assignment:
 vm.c - Implement a P-machine virtual machine
 
-Authors: <Arav Tulsi, Latrell>
+Authors: <Arav Tulsi, Latrell Kong>
 
 Language: C (only)
 
@@ -53,10 +53,17 @@ int main(int argc, char *argv[])
 
     printf("\n");
 
+    FILE *file = NULL;
+
     if (argc > 1)
     {
-        int x = atoi(argv[1]);   // convert string to int (simple)
-        printf("Converted argv[1] to int: %d\n", x);
+        // Opening file for input
+        file = fopen(argv[1], "r");
+        if(file == NULL)
+        {
+            printf("input file could not be opened");
+            return 1;
+        }
     }
     else
     {
@@ -65,32 +72,75 @@ int main(int argc, char *argv[])
         return 1;
     }
 
-    //Fetch Cycle
-        //Copy current instruction from pas to IR
-    IR[0] = pas[PC]; //OP
-    IR[1] = pas[PC + 1]; //L
-    IR[2] = pas[PC + 2]; //M
-    PC += 3; //Increment PC
+    // putting all instructions from file into PAS
+    int index = 0;
+    int op = 0;
+    int l = 0;
+    int m = 0;
 
-    //Execute Cycle
-    if(IR[0] == 2) //OPR
+    while(fscanf(file, "%d %d %d", &op, &l, &m) == 3)
     {
-        switch (IR[2]) //M
-        {
-            case 0: //RTN
-                SP = BP + 1;
-                BP = pas[SP - 2];
-                PC = pas[SP - 3];
-                break;
-            
-            case 1: //NEG
-
-        }
+        pas[index] = op;
+        pas[index + 1] = l;
+        pas[index + 2] = m;
+        index += 3;
     }
-    else //everything other than OPR
-    {
-        switch (IR[0]) //OP
+
+    // printing initial values (nothing in stack)
+    printf("intitial values : \n");
+    printf("PC=%d BP=%d SP=%d Stack: ", PC, BP, SP);
+
+    int stopCycle = 0;
+
+    while(!stopCycle){
+        //Fetch Cycle
+            //Copy current instruction from pas to IR
+        IR[0] = pas[PC]; //OP
+        IR[1] = pas[PC + 1]; //L
+        IR[2] = pas[PC + 2]; //M
+        PC += 3; //Increment PC
+
+        //Execute Cycle
+        if(IR[0] == 2) //OPR
         {
+            switch (IR[2]) //M
+            {
+                case 0: //RTN
+                {
+                    SP = BP + 1;
+                    BP = pas[SP - 2];
+                    PC = pas[SP - 3];
+                    break;
+                }
+                case 1: //NEG
+
+                case 2; //ADD
+
+                case 3; //SUB
+
+                case 4; //MULT
+
+                case 5; //DIV
+
+                case 6; //EQUAL
+
+                case 7; //INEQUAL
+
+                case 8; //LESS-THAN
+
+                case 9; //LESS-THAN/EQUAL
+
+                case 10; //GREATER-THAN
+
+                case 11; //GREATER-THAN/EQUAL
+
+            }
+        }
+        else //everything other than OPR
+        {
+            switch (IR[0]) //OP
+            {
+            }
         }
     }
 
