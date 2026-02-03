@@ -181,6 +181,8 @@ int main(int argc, char *argv[])
             {
                 case 1: //LIT
                 {
+                    SP = SP - 1;
+                    pas[SP] = n;
                     break;
                 }
 
