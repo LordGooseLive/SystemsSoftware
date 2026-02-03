@@ -107,9 +107,9 @@ int main(int argc, char *argv[])
             {
                 case 0: //RTN
                 {
-                    SP = BP + 1;
-                    BP = pas[SP - 2];
-                    PC = pas[SP - 3];
+                    SP = BP - 1;
+                    BP = pas[SP + 2];
+                    PC = pas[SP + 3];
                     break;
                 }
                 case 1: //NEG
