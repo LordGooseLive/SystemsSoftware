@@ -93,14 +93,14 @@ int main(int argc, char *argv[])
     int stopCycle = 0;
 
     while(!stopCycle){
-        //Fetch Cycle
-            //Copy current instruction from pas to IR
+        // Fetch Cycle
+            // Copy current instruction from pas to IR
         IR[0] = pas[PC]; //OP
         IR[1] = pas[PC + 1]; //L
         IR[2] = pas[PC + 2]; //M
         PC += 3; //Increment PC
 
-        //Execute Cycle
+        // Execute Cycle
         if(IR[0] == 2) //OPR
         {
             switch (IR[2]) //M
