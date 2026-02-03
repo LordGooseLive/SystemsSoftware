@@ -173,30 +173,91 @@ int main(int argc, char *argv[])
                     pas[SP-1] = (pas[SP-1] >= pas[SP]);
                     SP = SP - 1;
                 }
+
+                default: //ERROR
+                {
+                    printf("M = %d invalid for OP = 2 [OPR] \n", IR[2]);
+                    print();
+                    return;
+                }
             }
         }
-        else //everything other than OPR
+
+        else if (IR[0] == 9) //OP == SYS
+        {
+            switch (IR[2]) //M
+            {
+                case 1:
+                {
+                    break;
+                }
+                
+                case 2:
+                {
+                    break;
+                }
+                
+                case 3:
+                {
+                    break;
+                }
+
+                default: //ERROR
+                {
+                    printf("M = %d invalid for OP = 9 [SYS] \n", IR[2]);
+                    print();
+                    return;
+                }
+            }
+        }
+        else//everything other than OPR and SYS
         {
             switch (IR[0]) //OP
             {
                 case 1: //LIT
                 {
+                    SP--;
+                    pas[sp] = IR[2]
                     break;
                 }
 
-                case 2: //OPR
+                case 3: //LOD
+                {
+                    SP--;
+                    pas[SP] = pas[base(n) + IR[2]]
+                    break;
+                }
+
+                case 4: //STO
                 {
                     break;
                 }
 
-                case 3: //
+                case 5: //CAL
                 {
                     break;
                 }
 
-                case 4:
+                case 6: //INC
                 {
                     break;
+                }
+
+                case 7: //JMP
+                {
+                    break;
+                }
+
+                case 8: //JPC
+                {
+                    break;
+                }
+
+                default: //ERROR
+                {
+                    printf("OP = %d is invalid \n", IR[0]);
+                    print();
+                    return;
                 }
             }
         }
@@ -215,11 +276,8 @@ int base (int l)
     }
     return arb;
 }
-<<<<<<< HEAD:hw1/start_point.c
 
 void print(void)
 {
 
 }
-=======
->>>>>>> 1f440e64a0796aa312571c9e9f73b5fbd15bb5e1:hw1/vm.c
