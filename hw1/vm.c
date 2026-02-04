@@ -202,7 +202,7 @@ int main(int argc, char *argv[])
                 case 1: //OutputInt
                 {
                     printf("%d\n", pas[sp]);
-                    sp++
+                    sp++;
                     break;
                 }
                 
