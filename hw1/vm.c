@@ -237,7 +237,7 @@ int main(int argc, char *argv[])
                 case 1: //LIT
                 {
                     sp--;
-                    pas[sp] = ir[2]
+                    pas[sp] = ir[2];
                     break;
                 }
 
@@ -302,7 +302,7 @@ int main(int argc, char *argv[])
 
 int base (int l)
 {
-    int arb = pc;
+    int arb = bp;
     while (l > 0)
     {
         arb = pas[arb];
