@@ -217,11 +217,8 @@ int base (int l)
     }
     return arb;
 }
-<<<<<<< HEAD:hw1/start_point.c
 
 void print(void)
 {
-
+    
 }
-=======
->>>>>>> 1f440e64a0796aa312571c9e9f73b5fbd15bb5e1:hw1/vm.c
