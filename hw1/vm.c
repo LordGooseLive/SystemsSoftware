@@ -35,10 +35,10 @@ Due Date: Monday, February 9th, 2026
 #include <stdlib.h>
 
 //Global Variables
-int PC = 0; //Program Counter
-int BP = 480; //Base Pointer
-int SP = 481; //Stack Pointer; grows downwards
-int IR [3] = {0, 0, 0};   //Instruction Register
+int pc = 0; //Program Counter
+int pc = 480; //Base Pointer
+int sp = 481; //Stack Pointer; grows downwards
+int ir [3] = {0, 0, 0};   //Instruction Register
 int pas [500] = {0}; // Programme Address Space
 
 //prototypes
@@ -48,6 +48,16 @@ void print (void);
 
 int main(int argc, char *argv[])
 {
+
+    //Variable Declaration
+        // putting all instructions from file into PAS
+    int index = 0;
+    int op = 0;
+    int l = 0;
+    int m = 0;
+        //others
+    int temp = 0;
+
     printf("argc = %d\n", argc);
 
     for (int i = 0; i < argc; i++)
@@ -76,12 +86,6 @@ int main(int argc, char *argv[])
         return 1;
     }
 
-    // putting all instructions from file into PAS
-    int index = 0;
-    int op = 0;
-    int l = 0;
-    int m = 0;
-
     while(fscanf(file, "%d %d %d", &op, &l, &m) == 3)
     {
         pas[index] = op;
@@ -92,113 +96,194 @@ int main(int argc, char *argv[])
 
     // printing initial values (nothing in stack)
     printf("intitial values : \n");
-    printf("PC=%d BP=%d SP=%d Stack: ", PC, BP, SP);
+    printf("pc=%d pc=%d sp=%d Stack: ", pc, pc, sp);
 
     int stopCycle = 0;
 
     while(!stopCycle){
         // Fetch Cycle
-            // Copy current instruction from pas to IR
-        IR[0] = pas[PC]; //OP
-        IR[1] = pas[PC + 1]; //L
-        IR[2] = pas[PC + 2]; //M
-        PC += 3; //Increment PC
+            // Copy current instruction from pas to ir
+        ir[0] = pas[pc]; //OP
+        ir[1] = pas[pc + 1]; //L
+        ir[2] = pas[pc + 2]; //M
+        pc += 3; //Increment pc
 
         // Execute Cycle
-        if(IR[0] == 2) //OPR
+        if(ir[0] == 2) //OPR
         {
-            switch (IR[2]) //M
+            switch (ir[2]) //M
             {
                 case 0: //RTN
                 {
-                    SP = BP - 1;
-                    BP = pas[SP + 2];
-                    PC = pas[SP + 3];
+                    sp = pc - 1;
+                    pc = pas[sp + 2];
+                    pc = pas[sp + 3];
                     break;
                 }
                 case 1: //NEG
                 {
-                    pas[SP] = 0 - pas[SP];
+                    pas[sp] = 0 - pas[sp];
                     break;
                 }
                 case 2: //ADD
                 {
-                    pas[SP-1] = pas[SP-1] + pas[SP];
-                    SP = SP - 1;
+                    pas[sp-1] = pas[sp-1] + pas[sp];
+                    sp = sp - 1;
                     break;
                 }
                 case 3: //SUB
                 {
-                    pas[SP-1] = pas[SP-1] - pas[SP];
-                    SP = SP - 1;
+                    pas[sp-1] = pas[sp-1] - pas[sp];
+                    sp = sp - 1;
                     break;
                 }
                 case 4: //MULT
                 {
-                    pas[SP-1] = pas[SP-1] * pas[SP];
-                    SP = SP - 1;
+                    pas[sp-1] = pas[sp-1] * pas[sp];
+                    sp = sp - 1;
                 }
                 case 5: //DIV
                 {
-                    pas[SP-1] = pas[SP-1] / pas[SP];
-                    SP = SP - 1;
+                    pas[sp-1] = pas[sp-1] / pas[sp];
+                    sp = sp - 1;
                 }
                 case 6: //EQUAL
                 {
-                    pas[SP-1] = (pas[SP-1] == pas[SP]);
-                    SP = SP - 1;
+                    pas[sp-1] = (pas[sp-1] == pas[sp]);
+                    sp = sp - 1;
                 }
                 case 7: //INEQUAL
                 {
-                    pas[SP-1] = (pas[SP-1] != pas[SP]);
-                    SP = SP - 1;
+                    pas[sp-1] = (pas[sp-1] != pas[sp]);
+                    sp = sp - 1;
                 }
                 case 8: //LESS-THAN
                 {
-                    pas[SP-1] = (pas[SP-1] < pas[SP]);
-                    SP = SP - 1;
+                    pas[sp-1] = (pas[sp-1] < pas[sp]);
+                    sp = sp - 1;
                 }
                 case 9: //LESS-THAN/EQUAL
                 {
-                    pas[SP-1] = (pas[SP-1] <= pas[SP]);
-                    SP = SP - 1;
+                    pas[sp-1] = (pas[sp-1] <= pas[sp]);
+                    sp = sp - 1;
                 }
                 case 10: //GREATER-THAN
                 {
-                    pas[SP-1] = (pas[SP-1] > pas[SP]);
-                    SP = SP - 1;
+                    pas[sp-1] = (pas[sp-1] > pas[sp]);
+                    sp = sp - 1;
                 }
                 case 11: //GREATER-THAN/EQUAL
                 {
-                    pas[SP-1] = (pas[SP-1] >= pas[SP]);
-                    SP = SP - 1;
+                    pas[sp-1] = (pas[sp-1] >= pas[sp]);
+                    sp = sp - 1;
+                }
+
+                default: //ERROR
+                {
+                    printf("M = %d invalid for OP = 2 [OPR] \n", ir[2]);
+                    print();
+                    return;
                 }
             }
         }
-        else //everything other than OPR
+
+        else if (ir[0] == 9) //OP == SYS
         {
-            switch (IR[0]) //OP
+            switch (ir[2]) //M
+            {
+                case 1: //OutputInt
+                {
+                    printf("%d\n", pas[sp]);
+                    sp++
+                    break;
+                }
+                
+                case 2: //ReadInt
+                {
+                    sp--;
+                    printf("Please enter an integer: ");
+                    scanf("%d", &temp);
+                    printf("\n Input accepted.\n");
+                    pas[sp] = temp;
+                    break;
+                }
+                
+                case 3: //Halt
+                {
+                    stopCycle = 1;
+                    break;
+                }
+
+                default: //ERROR
+                {
+                    printf("M = %d invalid for OP = 9 [SYS] \n", ir[2]);
+                    print();
+                    return;
+                }
+            }
+        }
+        else//everything other than OPR and SYS
+        {
+            switch (ir[0]) //OP
             {
                 case 1: //LIT
                 {
-                    SP = SP - 1;
-                    pas[SP] = n;
+                    sp--;
+                    pas[sp] = ir[2]
                     break;
                 }
 
-                case 2: //OPR
+                case 3: //LOD
                 {
+                    sp--;
+                    pas[sp] = pas[base(n) + ir[2]]
                     break;
                 }
 
-                case 3: //
+                case 4: //STO
                 {
+                    pas[base(ir[1])+ir[2]] = pas[sp];
+                    sp++;
                     break;
                 }
 
-                case 4:
+                case 5: //CAL
                 {
+                    pas[sp-1] = base(ir[1]);
+                    pas[sp-2] = bp;
+                    pas[sp-3] = pc;
+                    pb = sp-1;
+                    pc = ir[2];
                     break;
+                }
+
+                case 6: //INC
+                {
+                    sp -= ir[2];
+                    break;
+                }
+
+                case 7: //JMP
+                {
+                    pc = ir[2]
+                    break;
+                }
+
+                case 8: //JPC
+                {
+                    if (pas[sp]==0) 
+                    {
+                        pc = ir[2];
+                    }
+                    sp++;
+                    break;
+                }
+
+                default: //ERROR
+                {
+                    printf("OP = %d is invalid \n", ir[0]);
+                    print();
+                    return;
                 }
             }
         }
@@ -209,7 +294,7 @@ int main(int argc, char *argv[])
 
 int base (int l)
 {
-    int arb = BP;
+    int arb = pc;
     while (l > 0)
     {
         arb = pas[arb];
