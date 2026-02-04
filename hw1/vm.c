@@ -36,7 +36,7 @@ Due Date: Monday, February 9th, 2026
 
 //Global Variables
 int pc = 0; //Program Counter
-int pc = 480; //Base Pointer
+int bp = 480; //Base Pointer
 int sp = 481; //Stack Pointer; grows downwards
 int ir [3] = {0, 0, 0};   //Instruction Register
 int pas [500] = {0}; // Programme Address Space
@@ -96,7 +96,7 @@ int main(int argc, char *argv[])
 
     // printing initial values (nothing in stack)
     printf("intitial values : \n");
-    printf("pc=%d pc=%d sp=%d Stack: ", pc, pc, sp);
+    printf("pc=%d bp=%d sp=%d Stack: ", pc, bp, sp);
 
     int stopCycle = 0;
 
@@ -115,8 +115,8 @@ int main(int argc, char *argv[])
             {
                 case 0: //RTN
                 {
-                    sp = pc - 1;
-                    pc = pas[sp + 2];
+                    sp = bp - 1;
+                    bp = pas[sp + 2];
                     pc = pas[sp + 3];
                     break;
                 }
@@ -141,41 +141,49 @@ int main(int argc, char *argv[])
                 {
                     pas[sp-1] = pas[sp-1] * pas[sp];
                     sp = sp - 1;
+                    break;
                 }
                 case 5: //DIV
                 {
                     pas[sp-1] = pas[sp-1] / pas[sp];
                     sp = sp - 1;
+                    break;
                 }
                 case 6: //EQUAL
                 {
                     pas[sp-1] = (pas[sp-1] == pas[sp]);
                     sp = sp - 1;
+                    break;
                 }
                 case 7: //INEQUAL
                 {
                     pas[sp-1] = (pas[sp-1] != pas[sp]);
                     sp = sp - 1;
+                    break;
                 }
                 case 8: //LESS-THAN
                 {
                     pas[sp-1] = (pas[sp-1] < pas[sp]);
                     sp = sp - 1;
+                    break;
                 }
                 case 9: //LESS-THAN/EQUAL
                 {
                     pas[sp-1] = (pas[sp-1] <= pas[sp]);
                     sp = sp - 1;
+                    break;
                 }
                 case 10: //GREATER-THAN
                 {
                     pas[sp-1] = (pas[sp-1] > pas[sp]);
                     sp = sp - 1;
+                    break;
                 }
                 case 11: //GREATER-THAN/EQUAL
                 {
                     pas[sp-1] = (pas[sp-1] >= pas[sp]);
                     sp = sp - 1;
+                    break;
                 }
 
                 default: //ERROR
