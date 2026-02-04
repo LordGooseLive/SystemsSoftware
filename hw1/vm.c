@@ -260,7 +260,7 @@ int main(int argc, char *argv[])
                     pas[sp-1] = base(ir[1]);
                     pas[sp-2] = bp;
                     pas[sp-3] = pc;
-                    pb = sp-1;
+                    bp = sp-1;
                     pc = ir[2];
                     break;
                 }
