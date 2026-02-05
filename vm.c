@@ -122,65 +122,76 @@ int main(int argc, char *argv[])
                     pc = pas[sp - 3];
                     break;
                 }
+
                 case 1: //NEG
                 {
                     pas[sp] = 0 - pas[sp];
                     break;
                 }
+
                 case 2: //ADD
                 {
                     pas[sp+1] = pas[sp+1] + pas[sp];
                     sp = sp + 1;
                     break;
                 }
+
                 case 3: //SUB
                 {
                     pas[sp+1] = pas[sp+1] - pas[sp];
                     sp = sp + 1;
                     break;
                 }
+
                 case 4: //MULT
                 {
                     pas[sp+1] = pas[sp+1] * pas[sp];
                     sp = sp + 1;
                     break;
                 }
+
                 case 5: //DIV
                 {
                     pas[sp+1] = pas[sp+1] / pas[sp];
                     sp = sp + 1;
                     break;
                 }
+
                 case 6: //EQUAL
                 {
                     pas[sp+1] = (pas[sp+1] == pas[sp]);
                     sp = sp + 1;
                     break;
                 }
+
                 case 7: //INEQUAL
                 {
                     pas[sp+1] = (pas[sp+1] != pas[sp]);
                     sp = sp + 1;
                     break;
                 }
+
                 case 8: //LESS-THAN
                 {
                     pas[sp+1] = (pas[sp+1] < pas[sp]);
                     sp = sp + 1;
                     break;
                 }
+
                 case 9: //LESS-THAN/EQUAL
                 {
                     pas[sp+1] = (pas[sp+1] <= pas[sp]);
                     sp = sp + 1;
                     break;
                 }
+
                 case 10: //GREATER-THAN
                 {
                     pas[sp+1] = (pas[sp+1] > pas[sp]);
                     sp = sp + 1;
                     break;
                 }
+
                 case 11: //GREATER-THAN/EQUAL
                 {
                     pas[sp+1] = (pas[sp+1] >= pas[sp]);
@@ -307,6 +318,7 @@ int main(int argc, char *argv[])
 int base (int l)
 {
     int arb = bp;
+
     while (l > 0)
     {
         arb = pas[arb];
@@ -318,6 +330,7 @@ int base (int l)
 void print(void)
 {
     char *opCode = "nothing";
+
     if(ir[0] == 2)
     {
         switch(ir[2])
@@ -327,69 +340,82 @@ void print(void)
                 opCode = "RTN";
                 break;
             }
+
             case 1:
             {
                 opCode = "NEG";
                 break;
             }
+
             case 2:
             {
                 opCode = "ADD";
                 break;
             }
+
             case 3:
             {
                 opCode = "SUB";
                 break;
             }
+
             case 4:
             {
                 opCode = "MUL";
                 break;
             }
+
             case 5:
             {
                 opCode = "DIV";
                 break;
             }
+
             case 6:
             {
                 opCode = "EQL";
                 break;
             }
+
             case 7:
             {
                 opCode = "NEQ";
                 break;
             }
+
             case 8:
             {
                 opCode = "LSS";
                 break;
             }
+
             case 9:
             {
                 opCode = "LEQ";
                 break;
             }
+
             case 10:
             {
                 opCode = "GTR";
                 break;
             }
+
             case 11:
             {
                 opCode = "GEQ";
                 break;
             }
+
             default:
             {
                 opCode = "something is wrong";
                 break;
             }
         }
-
-    }else
+    }
+    
+    else
     {
         switch(ir[0])
         {
@@ -398,41 +424,49 @@ void print(void)
                 opCode = "LIT";
                 break;
             }
+
             case 3:
             {
                 opCode = "LOD";
                 break;
             }
+
             case 4:
             {
                 opCode = "STO";
                 break;
             }
+
             case 5:
             {
                 opCode = "CAL";
                 break;
             }
+
             case 6:
             {
                 opCode = "INC";
                 break;
             }
+
             case 7:
             {
                 opCode = "JMP";
                 break;
             }
+
             case 8:
             {
                 opCode = "JPC";
                 break;
             }
+
             case 9:
             {
                 opCode = "SYS";
                 break;
             }
+
             default:
             {
                 opCode = "something is wrong";
@@ -447,6 +481,7 @@ void print(void)
     int allBpIndexes[100];
     int counter = 0;
     int tempBpIndex = bp;
+
     while(tempBpIndex < 480)
     {
         allBpIndexes[counter] = tempBpIndex;
@@ -463,7 +498,9 @@ void print(void)
                 printf("| ");
             }
         }
+
         printf("%d ", pas[i]);
     }
+
     printf("\n");
 }
