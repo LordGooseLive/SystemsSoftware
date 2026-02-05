@@ -97,11 +97,12 @@ int main(int argc, char *argv[])
 
     // printing initial values (nothing in stack)
     printf("         L       M    PC   BP   SP   stack\n");
-    printf("Initial values:     %d  %d  %d\n", pc, bp, sp);
+    printf("Initial values:       %d   %d  %d\n", pc, bp, sp);
 
     int stopCycle = 0;
 
-    while(!stopCycle){
+    while(!stopCycle)
+    {
         // Fetch Cycle
             // Copy current instruction from pas to ir
         ir[0] = pas[pc]; //OP
@@ -116,9 +117,9 @@ int main(int argc, char *argv[])
             {
                 case 0: //RTN
                 {
-                    sp = bp - 1;
-                    bp = pas[sp + 2];
-                    pc = pas[sp + 3];
+                    sp = bp + 1;
+                    bp = pas[sp - 2];
+                    pc = pas[sp - 3];
                     break;
                 }
                 case 1: //NEG
@@ -202,7 +203,7 @@ int main(int argc, char *argv[])
             {
                 case 1: //OutputInt
                 {
-                    printf("%d\n", pas[sp]);
+                    printf("Output result is: %d\n", pas[sp]);
                     sp++;
                     break;
                 }
@@ -211,8 +212,8 @@ int main(int argc, char *argv[])
                 {
                     sp--;
                     printf("Please Enter an Integer: ");
-                    if(scanf("%d", &temp)){
-                        printf("\n Input accepted.\n");
+                    if(scanf("%d", &temp))
+                    {
                         pas[sp] = temp;
                     }
                     break;
@@ -252,7 +253,7 @@ int main(int argc, char *argv[])
 
                 case 4: //STO
                 {
-                    pas[base(ir[1])+ir[2]] = pas[sp];
+                    pas[base(ir[1]) + ir[2]] = pas[sp];
                     sp++;
                     break;
                 }
@@ -297,9 +298,9 @@ int main(int argc, char *argv[])
                 }
             }
         }
+        print();
     }
 
-    print();
     return 0;
 }
 
@@ -440,7 +441,7 @@ void print(void)
         }
     }
 
-    printf("%s     %d       %d    %d  %d  %d", opCode, ir[1], ir[2], pc, bp, sp);
+    printf("%s     %d       %d    %d  %d  %d  ", opCode, ir[1], ir[2], pc, bp, sp);
 
     // creating array of all static links of activation records
     int allBpIndexes[100];
