@@ -441,7 +441,7 @@ void print(void)
         }
     }
 
-    printf("%s     %d       %d    %d  %d  %d  ", opCode, ir[1], ir[2], pc, bp, sp);
+    printf("%s     %3d    %3d   %2d   %2d  %2d  ", opCode, ir[1], ir[2], pc, bp, sp);
 
     // creating array of all static links of activation records
     int allBpIndexes[100];
