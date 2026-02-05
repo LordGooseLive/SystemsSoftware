@@ -97,7 +97,7 @@ int main(int argc, char *argv[])
 
     // printing initial values (nothing in stack)
     printf("         L       M    PC   BP   SP   stack\n");
-    printf("Intitial values:     %d  %d  %d\n", pc, bp, sp);
+    printf("Initial values:     %d  %d  %d\n", pc, bp, sp);
 
     int stopCycle = 0;
 
@@ -191,7 +191,7 @@ int main(int argc, char *argv[])
                 {
                     printf("M = %d invalid for OP = 2 [OPR] \n", ir[2]);
                     print();
-                    return;
+                    return 1;
                 }
             }
         }
@@ -211,9 +211,10 @@ int main(int argc, char *argv[])
                 {
                     sp--;
                     printf("Please Enter an Integer: ");
-                    scanf("%d", &temp);
-                    printf("\n Input accepted.\n");
-                    pas[sp] = temp;
+                    if(scanf("%d", &temp)){
+                        printf("\n Input accepted.\n");
+                        pas[sp] = temp;
+                    }
                     break;
                 }
                 
@@ -227,7 +228,7 @@ int main(int argc, char *argv[])
                 {
                     printf("M = %d invalid for OP = 9 [SYS] \n", ir[2]);
                     print();
-                    return;
+                    return 1;
                 }
             }
         }
@@ -292,7 +293,7 @@ int main(int argc, char *argv[])
                 {
                     printf("OP = %d is invalid \n", ir[0]);
                     print();
-                    return;
+                    return 1;
                 }
             }
         }
@@ -315,7 +316,7 @@ int base (int l)
 
 void print(void)
 {
-    char opCode = " ";
+    char *opCode = "nothing";
     if(ir[0] == 2)
     {
         switch(ir[2])
@@ -463,4 +464,5 @@ void print(void)
         }
         printf("%d ", pas[i]);
     }
+    printf("\n");
 }
