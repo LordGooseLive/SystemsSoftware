@@ -50,14 +50,17 @@ int m = 0;
 int base (int l);
 void print (void);
 
-
+//programme start
 int main(int argc, char *argv[])
 {
 
     //Variable Declaration
     int index = 0;
     int temp = 0;
+    int stopCycle = 0; //Halt flag
 
+
+    //verify command line arguments
     printf("argc = %d\n", argc);
 
     for (int i = 0; i < argc; i++)
@@ -79,6 +82,7 @@ int main(int argc, char *argv[])
             return 1;
         }
     }
+
     else
     {
         printf("No extra arguments provided.\n");
@@ -86,7 +90,7 @@ int main(int argc, char *argv[])
         return 1;
     }
 
-    // putting all instructions from file into PAS
+    // Put all instructions from file into PAS
     while(fscanf(file, "%d %d %d", &op, &l, &m) == 3)
     {
         pas[index] = op;
@@ -95,11 +99,9 @@ int main(int argc, char *argv[])
         index += 3;
     }
 
-    // printing initial values (nothing in stack)
+    // Print initial values (nothing in stack)
     printf("         L       M    PC   BP   SP   stack\n");
     printf("Initial values:       %d   %d  %d\n", pc, bp, sp);
-
-    int stopCycle = 0;
 
     while(!stopCycle)
     {
@@ -244,6 +246,7 @@ int main(int argc, char *argv[])
                 }
             }
         }
+
         else//everything other than OPR and SYS
         {
             switch (ir[0]) //OP
@@ -315,6 +318,7 @@ int main(int argc, char *argv[])
     return 0;
 }
 
+//Finds base L levels down from the current activation record
 int base (int l)
 {
     int arb = bp;
@@ -327,13 +331,16 @@ int base (int l)
     return arb;
 }
 
+
+//Prints the currnt stack
 void print(void)
 {
     char *opCode = "nothing";
-
+    
+    //determine instruction name
     if(ir[0] == 2)
     {
-        switch(ir[2])
+        switch(ir[2]) //OPR
         {
             case 0:
             {
