@@ -129,62 +129,62 @@ int main(int argc, char *argv[])
                 }
                 case 2: //ADD
                 {
-                    pas[sp-1] = pas[sp-1] + pas[sp];
-                    sp = sp - 1;
+                    pas[sp+1] = pas[sp+1] + pas[sp];
+                    sp = sp + 1;
                     break;
                 }
                 case 3: //SUB
                 {
-                    pas[sp-1] = pas[sp-1] - pas[sp];
-                    sp = sp - 1;
+                    pas[sp+1] = pas[sp+1] - pas[sp];
+                    sp = sp + 1;
                     break;
                 }
                 case 4: //MULT
                 {
-                    pas[sp-1] = pas[sp-1] * pas[sp];
-                    sp = sp - 1;
+                    pas[sp+1] = pas[sp+1] * pas[sp];
+                    sp = sp + 1;
                     break;
                 }
                 case 5: //DIV
                 {
-                    pas[sp-1] = pas[sp-1] / pas[sp];
-                    sp = sp - 1;
+                    pas[sp+1] = pas[sp+1] / pas[sp];
+                    sp = sp + 1;
                     break;
                 }
                 case 6: //EQUAL
                 {
-                    pas[sp-1] = (pas[sp-1] == pas[sp]);
-                    sp = sp - 1;
+                    pas[sp+1] = (pas[sp+1] == pas[sp]);
+                    sp = sp + 1;
                     break;
                 }
                 case 7: //INEQUAL
                 {
-                    pas[sp-1] = (pas[sp-1] != pas[sp]);
-                    sp = sp - 1;
+                    pas[sp+1] = (pas[sp+1] != pas[sp]);
+                    sp = sp + 1;
                     break;
                 }
                 case 8: //LESS-THAN
                 {
-                    pas[sp-1] = (pas[sp-1] < pas[sp]);
-                    sp = sp - 1;
+                    pas[sp+1] = (pas[sp+1] < pas[sp]);
+                    sp = sp + 1;
                     break;
                 }
                 case 9: //LESS-THAN/EQUAL
                 {
-                    pas[sp-1] = (pas[sp-1] <= pas[sp]);
-                    sp = sp - 1;
+                    pas[sp+1] = (pas[sp+1] <= pas[sp]);
+                    sp = sp + 1;
                     break;
                 }
                 case 10: //GREATER-THAN
                 {
-                    pas[sp-1] = (pas[sp-1] > pas[sp]);
-                    sp = sp - 1;
+                    pas[sp+1] = (pas[sp+1] > pas[sp]);
+                    sp = sp + 1;
                     break;
                 }
                 case 11: //GREATER-THAN/EQUAL
                 {
-                    pas[sp-1] = (pas[sp-1] >= pas[sp]);
-                    sp = sp - 1;
+                    pas[sp+1] = (pas[sp+1] >= pas[sp]);
+                    sp = sp + 1;
                     break;
                 }
 
@@ -247,13 +247,13 @@ int main(int argc, char *argv[])
                 case 3: //LOD
                 {
                     sp--;
-                    pas[sp] = pas[base(ir[1]) + ir[2]];
+                    pas[sp] = pas[base(ir[1]) - ir[2]];
                     break;
                 }
 
                 case 4: //STO
                 {
-                    pas[base(ir[1]) + ir[2]] = pas[sp];
+                    pas[base(ir[1]) - ir[2]] = pas[sp];
                     sp++;
                     break;
                 }
@@ -447,7 +447,7 @@ void print(void)
     int allBpIndexes[100];
     int counter = 0;
     int tempBpIndex = bp;
-    while(tempBpIndex <= 480)
+    while(tempBpIndex < 480)
     {
         allBpIndexes[counter] = tempBpIndex;
         counter++;
