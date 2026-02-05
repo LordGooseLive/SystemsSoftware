@@ -41,6 +41,11 @@ int sp = 481; //Stack Pointer; grows downwards
 int ir [3] = {0, 0, 0};   //Instruction Register
 int pas [500] = {0}; // Programme Address Space
 
+// instructions
+int op = 0;
+int l = 0;
+int m = 0;
+
 //prototypes
 int base (int l);
 void print (void);
@@ -50,12 +55,7 @@ int main(int argc, char *argv[])
 {
 
     //Variable Declaration
-        // putting all instructions from file into PAS
     int index = 0;
-    int op = 0;
-    int l = 0;
-    int m = 0;
-        //others
     int temp = 0;
 
     printf("argc = %d\n", argc);
@@ -86,6 +86,7 @@ int main(int argc, char *argv[])
         return 1;
     }
 
+    // putting all instructions from file into PAS
     while(fscanf(file, "%d %d %d", &op, &l, &m) == 3)
     {
         pas[index] = op;
@@ -95,8 +96,8 @@ int main(int argc, char *argv[])
     }
 
     // printing initial values (nothing in stack)
-    printf("intitial values : \n");
-    printf("pc=%d bp=%d sp=%d Stack: ", pc, bp, sp);
+    printf("         L       M    PC   BP   SP   stack\n");
+    printf("Intitial values:     %d  %d  %d\n", pc, bp, sp);
 
     int stopCycle = 0;
 
@@ -209,7 +210,7 @@ int main(int argc, char *argv[])
                 case 2: //ReadInt
                 {
                     sp--;
-                    printf("Please enter an integer: ");
+                    printf("Please Enter an Integer: ");
                     scanf("%d", &temp);
                     printf("\n Input accepted.\n");
                     pas[sp] = temp;
@@ -244,7 +245,7 @@ int main(int argc, char *argv[])
                 case 3: //LOD
                 {
                     sp--;
-                    pas[sp] = pas[base(n) + ir[2]]
+                    pas[sp] = pas[base(ir[1]) + ir[2]];
                     break;
                 }
 
@@ -273,7 +274,7 @@ int main(int argc, char *argv[])
 
                 case 7: //JMP
                 {
-                    pc = ir[2]
+                    pc = ir[2];
                     break;
                 }
 
@@ -297,6 +298,7 @@ int main(int argc, char *argv[])
         }
     }
 
+    print();
     return 0;
 }
 
@@ -313,5 +315,152 @@ int base (int l)
 
 void print(void)
 {
-    //printf("pc=%d bp=%d sp=%d Stack: ", pc, bp, sp);
+    char opCode = " ";
+    if(ir[0] == 2)
+    {
+        switch(ir[2])
+        {
+            case 0:
+            {
+                opCode = "RTN";
+                break;
+            }
+            case 1:
+            {
+                opCode = "NEG";
+                break;
+            }
+            case 2:
+            {
+                opCode = "ADD";
+                break;
+            }
+            case 3:
+            {
+                opCode = "SUB";
+                break;
+            }
+            case 4:
+            {
+                opCode = "MUL";
+                break;
+            }
+            case 5:
+            {
+                opCode = "DIV";
+                break;
+            }
+            case 6:
+            {
+                opCode = "EQL";
+                break;
+            }
+            case 7:
+            {
+                opCode = "NEQ";
+                break;
+            }
+            case 8:
+            {
+                opCode = "LSS";
+                break;
+            }
+            case 9:
+            {
+                opCode = "LEQ";
+                break;
+            }
+            case 10:
+            {
+                opCode = "GTR";
+                break;
+            }
+            case 11:
+            {
+                opCode = "GEQ";
+                break;
+            }
+            default:
+            {
+                opCode = "something is wrong";
+                break;
+            }
+        }
+
+    }else
+    {
+        switch(ir[0])
+        {
+            case 1:
+            {
+                opCode = "LIT";
+                break;
+            }
+            case 3:
+            {
+                opCode = "LOD";
+                break;
+            }
+            case 4:
+            {
+                opCode = "STO";
+                break;
+            }
+            case 5:
+            {
+                opCode = "CAL";
+                break;
+            }
+            case 6:
+            {
+                opCode = "INC";
+                break;
+            }
+            case 7:
+            {
+                opCode = "JMP";
+                break;
+            }
+            case 8:
+            {
+                opCode = "JPC";
+                break;
+            }
+            case 9:
+            {
+                opCode = "SYS";
+                break;
+            }
+            default:
+            {
+                opCode = "something is wrong";
+                break;
+            }
+        }
+    }
+
+    printf("%s     %d       %d    %d  %d  %d", opCode, ir[1], ir[2], pc, bp, sp);
+
+    // creating array of all static links of activation records
+    int allBpIndexes[100];
+    int counter = 0;
+    int tempBpIndex = bp;
+    while(tempBpIndex <= 480)
+    {
+        allBpIndexes[counter] = tempBpIndex;
+        counter++;
+        tempBpIndex = pas[tempBpIndex];
+    }
+
+    for(int i = 480; i >= sp; i--)
+    {
+        for(int j = 0; j < counter; j++)
+        {
+            if(i == allBpIndexes[j])
+            {
+                printf("| ");
+            }
+        }
+        printf("%d ", pas[i]);
+    }
 }
