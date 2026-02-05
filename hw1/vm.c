@@ -313,5 +313,5 @@ int base (int l)
 
 void print(void)
 {
-    
+    //printf("pc=%d bp=%d sp=%d Stack: ", pc, bp, sp);
 }
