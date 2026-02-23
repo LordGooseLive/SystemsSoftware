@@ -33,6 +33,7 @@ Due Date: Monday, February 3, 2026
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 int main(int argc, char *argv[])
 {
@@ -54,7 +55,29 @@ int main(int argc, char *argv[])
     {
         printf("No extra arguments provided.\n");
         printf("Try: ./00_args 123\n");
+        return 1; //error 1: insufficient arguments
     }
 
+    //Variable declaration and Initialisation
+    char lexemes [50][11] = ""; //array of lexemes
+    int tokens [50] = 0; //array of tokens
+    int len = 0; //number of lexemes/ tokens scanned
+
+
     return 0;
+}
+
+void print (int tokens [], char lexemes[][], int len)
+{
+    //print input file  
+    printf("Source Program: \n");
+    //implement logic
+
+    //print lexeme-token pairs
+    printf("Lexeme Table:\n");
+    printf("lexeme %t token type");
+    for (int i = 0; i < len; i++)
+    {
+        printf("%s %t %d \n", lexemes[i], tokens[i]);
+    }
 }
