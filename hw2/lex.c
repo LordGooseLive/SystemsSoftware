@@ -2,7 +2,7 @@
 Assignment:
 lex - Lexical Analyzer for PL/0
 
-Author: <Your Name Here>
+Author: <Arav Tulsi, Latrell Kong>
 
 Language: C(only)
 
