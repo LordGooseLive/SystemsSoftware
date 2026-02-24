@@ -35,6 +35,11 @@ Due Date: Monday, February 3, 2026
 #include <stdlib.h>
 #include <string.h>
 
+//REMOVE BEFORE SUBMISSION
+#define MAX_TOKENS 50
+#define MAX_NAMES 50
+
+
 int main(int argc, char *argv[])
 {
     printf("argc = %d\n", argc);
@@ -59,25 +64,37 @@ int main(int argc, char *argv[])
     }
 
     //Variable declaration and Initialisation
-    char lexemes [50][11] = ""; //array of lexemes
-    int tokens [50] = 0; //array of tokens
-    int len = 0; //number of lexemes/ tokens scanned
+    //assume 50 tokens
+    char lexemes [MAX_TOKENS][11] = ""; //array of lexemes
+    int tokens [MAX_TOKENS] = 0; //array of tokens
+    char names [MAX_NAMES][11] = ""; //array of identsyms
+    int num_lex = 0; //number of records in lexeme table
+    int num_names = 0; //number of names in name table
 
+    /*
+        IMPLEMENT PROGRAMME BODY
+    */
 
-    return 0;
-}
-
-void print (int tokens [], char lexemes[][], int len)
-{
-    //print input file  
+    //Print everything
+    //Input file  
     printf("Source Program: \n");
     //implement logic
 
-    //print lexeme-token pairs
+    //lexeme Table
     printf("Lexeme Table:\n");
-    printf("lexeme %t token type");
-    for (int i = 0; i < len; i++)
+    printf("lexeme \t token type \n");
+    for (int i = 0; i < num_lex; i++)
     {
-        printf("%s %t %d \n", lexemes[i], tokens[i]);
+        printf("%s \t %d \n", lexemes[i], tokens[i]);
     }
+
+    //Name Table
+    printf("Name Table:\n");
+    printf("Index \t Name\n");
+    for (int i = 0; i < num_names; i++)
+    {
+        printf("%d \t %s \n", i, names[i]);
+    }
+
+    return 0;
 }
