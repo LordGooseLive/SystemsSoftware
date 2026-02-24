@@ -17,7 +17,7 @@ where:
 
 Notes:
   - Implement a lexical analyser for the PL/0 language.
-  - The program must detect errors such as 
+  - The program must detect errors such as
     - numbers longer than five digits
     - identifiers longer than eleven characters
     - invalid characters.
@@ -34,6 +34,45 @@ Due Date: Monday, February 3, 2026
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
+
+typedef enum
+{
+  skipsym = 1,  // Skip / ignore token
+  identsym,     // Identifier
+  numbersym,    // Number
+  beginsym,     // begin
+  endsym,       // end
+  ifsym,        // if
+  fisym,        // fi
+  thensym,      // then
+  whilesym,     // while
+  dosym,        // do
+  odsym,        // od
+  callsym,      // call
+  constsym,     // const
+  varsym,       // var
+  procsym,      // procedure
+  writesym,     // write
+  readsym,      // read
+  elsesym,      // else
+  plussym,      // +
+  minussym,     // -
+  multsym,      // *
+  slashsym,     // /
+  eqsym,        // =
+  neqsym,       // <>
+  lessym,       // <
+  leqsym,       // <=
+  gtrsym,       // >
+  geqsym,       // >=
+  lparentsym,   // (
+  rparentsym,   // )
+  commasym,     // ,
+  semicolonsym, // ;
+  periodsym,    // .
+  becomessym    // :=
+} TokenType;
 
 //REMOVE BEFORE SUBMISSION
 #define MAX_TOKENS 50
@@ -42,26 +81,32 @@ Due Date: Monday, February 3, 2026
 
 int main(int argc, char *argv[])
 {
-    printf("argc = %d\n", argc);
 
-    for (int i = 0; i < argc; i++)
-    {
-        printf("argv[%d] = %s\n", i, argv[i]);
-    }
+  for (int i = 0; i < argc; i++)
+  {
+    printf("argv[%d] = %s\n", i, argv[i]);
+  }
+  printf("\n");
 
-    printf("\n");
 
-    if (argc > 1)
+  FILE *file = NULL;
+  if (argc > 1)
+  {
+    // Opening file for input
+    file = fopen(argv[1], "r");
+    if (file == NULL)
     {
-        int x = atoi(argv[1]);   // convert string to int (simple)
-        printf("Converted argv[1] to int: %d\n", x);
+      printf("input file could not be opened");
+      return 1;
     }
-    else
-    {
-        printf("No extra arguments provided.\n");
-        printf("Try: ./00_args 123\n");
-        return 1; //error 1: insufficient arguments
-    }
+  }
+
+  else
+  {
+    printf("No extra arguments provided.\n");
+    printf("Try: ./00_args 123\n");
+    return 1;
+  }
 
     //Variable declaration and Initialisation
     //assume 50 tokens
@@ -80,6 +125,11 @@ int main(int argc, char *argv[])
     printf("Source Program: \n");
     //implement logic
 
+  while((character = fgetc(file)) != EOF )
+  {
+    
+  }
+
     //lexeme Table
     printf("Lexeme Table:\n");
     printf("lexeme \t token type \n");
@@ -95,6 +145,5 @@ int main(int argc, char *argv[])
     {
         printf("%d \t %s \n", i, names[i]);
     }
-
-    return 0;
+  return 0;
 }
