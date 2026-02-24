@@ -85,7 +85,7 @@ int main(int argc, char *argv[])
 
 
   FILE *file = NULL;
-  if (argc > 1)
+  if (argc == 2)
   {
     // Opening file for input
     file = fopen(argv[1], "r");
@@ -96,6 +96,7 @@ int main(int argc, char *argv[])
     }
   }
 
+  // error message if not valid number of arguments
   else
   {
     printf("No extra arguments provided.\n");
@@ -109,14 +110,72 @@ int main(int argc, char *argv[])
   int len = 0;            // number of lexemes/ tokens scanned
   int character = 0;      // used to parse file 
 
+  // parsing character by character until end of file
   while((character = fgetc(file)) != EOF )
   {
+    // skipping if encountering invisible characters
+    if(isspace(character))
+    {
+      continue;
+    }
+
+    // skipping if encountering multi-line comments
+    if(character == '/')
+    {
+      int temp  = fgetc(file);
+      int breakLoop = 1;
+      if(temp == '*')
+      {
+        // parsing through whole comment
+        while(breakLoop == 1)
+        {
+          character = fgetc(file);
+
+          // error catching if comment goes until EOF
+          if(character == EOF)
+          {
+            printf("error with multi-line comment");
+            breakLoop = 0;
+            continue;
+          }
+
+          // checking as might be end of multi-line comment
+          else if(character == '*')
+          {
+            temp = fgetc(file);
+            if(temp == '/')
+            {
+              breakLoop = 0;
+              continue;
+            }
+            else
+            {
+              ungetc(temp, file);
+            }
+          }
+
+          // continuing to next character in comment
+          continue;
+        }
+      }
+
+      // going back if not multi-line comment and just a slash
+      else
+      {
+        ungetc(temp, file);
+      }
+    }
+
     
+
+
+
   }
 
   return 0;
 }
 
+// print function
 void print(int tokens[], char lexemes[][12], int len)
 {
   // print input file
