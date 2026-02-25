@@ -81,7 +81,6 @@ typedef enum
 
 int main(int argc, char *argv[])
 {
-
   for (int i = 0; i < argc; i++)
   {
     printf("argv[%d] = %s\n", i, argv[i]);
@@ -90,7 +89,7 @@ int main(int argc, char *argv[])
 
 
   FILE *file = NULL;
-  if (argc > 1)
+  if (argc == 2)
   {
     // Opening file for input
     file = fopen(argv[1], "r");
@@ -101,6 +100,7 @@ int main(int argc, char *argv[])
     }
   }
 
+  // error message if not valid number of arguments
   else
   {
     printf("No extra arguments provided.\n");
@@ -108,23 +108,15 @@ int main(int argc, char *argv[])
     return 1;
   }
 
-    //Variable declaration and Initialisation
-    //assume 50 tokens
-    char lexemes [MAX_TOKENS][11] = ""; //array of lexemes
-    int tokens [MAX_TOKENS] = 0; //array of tokens
-    char names [MAX_NAMES][11] = ""; //array of identsyms
-    int num_lex = 0; //number of records in lexeme table
-    int num_names = 0; //number of names in name table
+  // Variable declaration and Initialisation
+  char lexemes[50][12];   // array of lexemes
+  char names [50][11];  //array of names
+  int tokens[50];         // array of tokens
+  int num_lex = 0;            // number of lexemes/ tokens scanned
+  int character = 0;      // used to parse file 
+  int num_names = 0;
 
-    /*
-        IMPLEMENT PROGRAMME BODY
-    */
-
-    //Print everything
-    //Input file  
-    printf("Source Program: \n");
-    //implement logic
-
+  // parsing character by character until end of file
   while((character = fgetc(file)) != EOF )
   {
     
