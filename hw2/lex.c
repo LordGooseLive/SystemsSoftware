@@ -74,6 +74,8 @@ typedef enum
   becomessym    // :=
 } TokenType;
 
+int streq (char stringA [], char stringB []); //String equal? 1 : 0
+
 //REMOVE BEFORE SUBMISSION
 #define MAX_TOKENS 50
 #define MAX_NAMES 50
@@ -83,11 +85,12 @@ int main(int argc, char *argv[])
 {
     // Variable declaration and Initialisation
     char lexemes[50][12];   // array of lexemes
-    char names [50][11];  //array of names
+    char names [50][11];    //array of names
     int tokens[50];         // array of tokens
-    int num_lex = 0;            // number of lexemes/ tokens scanned
+    int num_lex = 0;        // number of lexemes/ tokens scanned
     int character = 0;      // used to parse file 
     int num_names = 0;
+    FILE *file = NULL;      //stores input file
 
     for (int i = 0; i < argc; i++)
     {
@@ -95,8 +98,6 @@ int main(int argc, char *argv[])
     }
     printf("\n");
 
-
-    FILE *file = NULL;
     if (argc == 2)
     {
         // Opening file for input
@@ -119,7 +120,6 @@ int main(int argc, char *argv[])
     // parsing character by character until end of file
     while((character = fgetc(file)) != EOF )
     {
-        
         // skipping if encountering invisible characters
         if(isspace(character))
         {
@@ -212,77 +212,77 @@ int main(int argc, char *argv[])
             }
 
             // checking if identifier is a reserved word
-            if(strcmp(lexemes[num_lex], "begin") == 0)
+            if(streq(lexemes[num_lex], "begin"))
             {
                 tokens[num_lex] = beginsym;
             }
 
-            else if(strcmp(lexemes[num_lex], "end") == 0)
+            else if(streq(lexemes[num_lex], "end"))
             {
                 tokens[num_lex] = endsym;
             }
 
-            else if(strcmp(lexemes[num_lex], "if") == 0)
+            else if(streq(lexemes[num_lex], "if"))
             {
                 tokens[num_lex] = ifsym;
             }
 
-            else if(strcmp(lexemes[num_lex], "fi") == 0)
+            else if(streq(lexemes[num_lex], "fi"))
             {
                 tokens[num_lex] = fisym;
             }
 
-            else if(strcmp(lexemes[num_lex], "then") == 0)
+            else if(streq(lexemes[num_lex], "then"))
             {
                 tokens[num_lex] = thensym;
             }
 
-            else if(strcmp(lexemes[num_lex], "while") == 0)
+            else if(streq(lexemes[num_lex], "while"))
             {
                 tokens[num_lex] = whilesym;
             }
 
-            else if(strcmp(lexemes[num_lex], "do") == 0)
+            else if(streq(lexemes[num_lex], "do"))
             {
                 tokens[num_lex] = dosym;
             }
 
-            else if(strcmp(lexemes[num_lex], "od") == 0)
+            else if(streq(lexemes[num_lex], "od"))
             {
                 tokens[num_lex] = odsym;
             }
 
-            else if(strcmp(lexemes[num_lex], "call") == 0)
+            else if(streq(lexemes[num_lex], "call"))
             {
                 tokens[num_lex] = callsym;
             }
 
-            else if(strcmp(lexemes[num_lex], "const") == 0)
+            else if(streq(lexemes[num_lex], "const"))
             {
                 tokens[num_lex] = constsym;
             }
 
-            else if(strcmp(lexemes[num_lex], "var") == 0)
+            else if(streq(lexemes[num_lex], "var"))
             {
                 tokens[num_lex] = varsym;
             }
 
-            else if(strcmp(lexemes[num_lex], "procedure") == 0)
+            else if(streq(lexemes[num_lex], "procedure"))
             {
                 tokens[num_lex] = procsym;
             }
 
-            else if(strcmp(lexemes[num_lex], "write") == 0)
+            else if(streq(lexemes[num_lex], "write"))
             {
                 tokens[num_lex] = writesym;
             }
 
-            else if(strcmp(lexemes[num_lex], "read") == 0)
+            else if(streq(lexemes[num_lex], "read"))
             {
                 tokens[num_lex] = readsym;
             }
 
-            else if(strcmp(lexemes[num_lex], "else") == 0)
+            else if(streq(lexemes[num_lex], "else"))
             {
                 tokens[num_lex] = elsesym;
             }
@@ -475,7 +475,7 @@ int main(int argc, char *argv[])
         //lexeme Table
         printf("Lexeme Table:\n");
         printf("lexeme \t token type \n");
-        
+
         for (int i = 0; i < num_lex; i++)
         {
             printf("%s \t %d \n", lexemes[i], tokens[i]);
@@ -488,7 +488,15 @@ int main(int argc, char *argv[])
         {
             printf("%d \t %s \n", i, names[i]);
         }
-
-    return 0;
     }
+
+    return 0; //everything went well
+}
+
+int streq (char stringA [], char stringB []) //String equal? 1 : 0
+{
+    if (strcmp(stringA, stringB) == 0)
+        return 1; //true
+    else
+        return 0; //false
 }
