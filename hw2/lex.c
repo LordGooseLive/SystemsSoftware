@@ -120,7 +120,7 @@ int main(int argc, char *argv[])
     }
 
     // skipping if encountering multi-line comments
-    if(character == '/')
+    else if(character == '/')
     {
       int temp  = fgetc(file);
       int breakLoop = 1;
@@ -157,16 +157,20 @@ int main(int argc, char *argv[])
           // continuing to next character in comment
           continue;
         }
+        continue;
       }
 
       // going back if not multi-line comment and just a slash
       else
       {
         ungetc(temp, file);
+        lexemes[len][0] = '/';
+        lexemes[len][1] = '\0';
+        tokens[len++] = slashsym;
       }
     }
 
-    if(isalpha(character))
+    else if(isalpha(character))
     {
       int counter = 0;
       lexemes[len][counter++] = character;
@@ -174,7 +178,7 @@ int main(int argc, char *argv[])
       int temp = fgetc(file);
       while(temp != EOF && isalnum(temp))
       {
-        if(counter > 10)
+        if(counter >= 11)
         {
           printf("Identifier is too long");
           break;
@@ -258,9 +262,159 @@ int main(int argc, char *argv[])
       len++;
     }
     
+    else if(isdigit(character))
+    {
+      int counter = 0;
+      lexemes[len][counter++] = character;
 
+      int temp = fgetc(file);
+      while(temp != EOF && isdigit(temp))
+      {
+        if(counter >= 5)
+        {
+          printf("Number is too long");
+          break;
+        }
 
+          lexemes[len][counter++] = temp;
+          temp = fgetc(file);
+      }
 
+      if(isalpha(temp))
+      {
+        printf("invalid number (has letters)");
+      }
+
+      if(temp != EOF)
+      {
+        ungetc(temp, file);
+      }
+        
+      lexemes[len][counter] = '\0';
+      tokens[len++] = numbersym;
+    }
+
+    else if(character == '+')
+    {
+      lexemes[len][0] = character;
+      lexemes[len][1] = '\0';
+      tokens[len++] = plussym;
+    }
+    else if(character == '-')
+    {
+      lexemes[len][0] = character;
+      lexemes[len][1] = '\0';
+      tokens[len++] = minussym;
+    }
+    else if(character == '*')
+    {
+      lexemes[len][0] = character;
+      lexemes[len][1] = '\0';
+      tokens[len++] = multsym;
+    }
+    else if(character == '=')
+    {
+      lexemes[len][0] = character;
+      lexemes[len][1] = '\0';
+      tokens[len++] = eqsym;
+    }
+    else if(character == '(')
+    {
+      lexemes[len][0] = character;
+      lexemes[len][1] = '\0';
+      tokens[len++] = lparentsym;
+    }
+    else if(character == ')')
+    {
+      lexemes[len][0] = character;
+      lexemes[len][1] = '\0';
+      tokens[len++] = rparentsym;
+    }
+    else if(character == ',')
+    {
+      lexemes[len][0] = character;
+      lexemes[len][1] = '\0';
+      tokens[len++] = commasym;
+    }
+    else if(character == ';')
+    {
+      lexemes[len][0] = character;
+      lexemes[len][1] = '\0';
+      tokens[len++] = semicolonsym;
+    }
+    else if(character == '.')
+    {
+      lexemes[len][0] = character;
+      lexemes[len][1] = '\0';
+      tokens[len++] = periodsym;
+    }
+
+    else if(character == '<')
+    {
+      int temp = fgetc(file);
+      if(temp == '>')
+      {
+        lexemes[len][0] = '<';
+        lexemes[len][1] = '>';
+        lexemes[len][2] = '\0';
+        tokens[len++] = neqsym;
+      }
+      else if(temp == '=')
+      {
+        lexemes[len][0] = '<';
+        lexemes[len][1] = '=';
+        lexemes[len][2] = '\0';
+        tokens[len++] = leqsym;
+      }
+      else 
+      {
+        ungetc(temp, file);
+        lexemes[len][0] = character;
+        lexemes[len][1] = '\0';
+        tokens[len++] = lessym; 
+      }
+    }
+
+    else if(character == '>')
+    {
+      int temp = fgetc(file);
+      if(temp == '=')
+      {
+        lexemes[len][0] = '>';
+        lexemes[len][1] = '=';
+        lexemes[len][2] = '\0';
+        tokens[len++] = geqsym;
+      }
+      else 
+      {
+        ungetc(temp, file);
+        lexemes[len][0] = character;
+        lexemes[len][1] = '\0';
+        tokens[len++] = gtrsym;
+      }
+    }
+    
+    else if(character == ':')
+    {
+      int temp = fgetc(file);
+      if(temp == '=')
+      {
+        lexemes[len][0] = ':';
+        lexemes[len][1] = '=';
+        lexemes[len][2] = '\0';
+        tokens[len++] = becomessym;
+      }
+      else 
+      {
+        printf("invalid symbol (no token representation)");
+        ungetc(file, temp);
+      }
+    }
+
+    else
+    {
+      printf("Invalid character scanned");
+    }
   }
 
   return 0;
