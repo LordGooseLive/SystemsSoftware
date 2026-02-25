@@ -75,7 +75,7 @@ typedef enum
 } TokenType;
 
 int streq (char stringA [], char stringB []); //String equal? 1 : 0
-
+int nameExists (char name [], char names[][11], int num_names); //checks if the name is already in name table
 //REMOVE BEFORE SUBMISSION
 #define MAX_TOKENS 50
 #define MAX_NAMES 50
@@ -482,11 +482,18 @@ int main(int argc, char *argv[])
         }
 
         //Name Table
-        printf("Name Table:\n");
+        printf("\nName Table:\n");
         printf("Index \t Name\n");
         for (int i = 0; i < num_names; i++)
         {
             printf("%d \t %s \n", i, names[i]);
+        }
+
+        //print tokens
+        printf("\n Token List:\n\n");
+        for (int i = 0; i < num_lex; i++)
+        {
+            printf("%s", tokens[i]);
         }
     }
 
@@ -499,4 +506,18 @@ int streq (char stringA [], char stringB []) //String equal? 1 : 0
         return 1; //true
     else
         return 0; //false
+}
+
+int nameExists (char name [], char names[][11], int num_names) //checks if the name is already in name table
+{
+    int retval = 0;
+    for (int i = 0; i < num_names; i++)
+    {
+        if (streq (name, names[i]))
+        {   
+            retval = 1;
+            break;
+        }
+    }
+    return retval;
 }
