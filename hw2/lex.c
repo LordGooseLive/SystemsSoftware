@@ -122,7 +122,326 @@ int main(int argc, char *argv[])
     
   }
 
-    //lexeme Table
+    // skipping if encountering multi-line comments
+    else if(character == '/')
+    {
+      int temp  = fgetc(file);
+      int breakLoop = 1;
+      if(temp == '*')
+      {
+        // parsing through whole comment
+        while(breakLoop == 1)
+        {
+          character = fgetc(file);
+
+          // error catching if comment goes until EOF
+          if(character == EOF)
+          {
+            printf("error with multi-line comment");
+            breakLoop = 0;
+            continue;
+          }
+
+          // checking as might be end of multi-line comment
+          else if(character == '*')
+          {
+            temp = fgetc(file);
+            if(temp == '/')
+            {
+              breakLoop = 0;
+              continue;
+            }
+            else
+            {
+              ungetc(temp, file);
+            }
+          }
+
+          // continuing to next character in comment
+          continue;
+        }
+        continue;
+      }
+
+      // going back if not multi-line comment and just a slash
+      else
+      {
+        ungetc(temp, file);
+        lexemes[len][0] = '/';
+        lexemes[len][1] = '\0';
+        tokens[len++] = slashsym;
+      }
+    }
+
+    // if character is a letter(identifier)
+    else if(isalpha(character))
+    {
+      // initializing first letter of identifier and counter
+      int counter = 0;
+      lexemes[len][counter++] = character;
+
+      // getting next character and checking if it is letter/number
+      int temp = fgetc(file);
+      while(temp != EOF && isalnum(temp))
+      {
+        // checking length
+        if(counter >= 11)
+        {
+          printf("Identifier is too long");
+          break;
+        }
+
+        // inputting character into string and getting next character
+        lexemes[len][counter++] = temp;
+        temp = fgetc(file);
+      }
+      
+      // adding null terminator to end
+      lexemes[len][counter] = '\0';
+
+      // if was not letter/number, ungetting character
+      if(temp != EOF)
+      {
+        ungetc(temp, file);
+      }
+
+      // checking if identifier is a reserved word
+      if(strcmp(lexemes[len], "begin") == 0)
+      {
+        tokens[len] = beginsym;
+      }
+      else if(strcmp(lexemes[len], "end") == 0)
+      {
+        tokens[len] = endsym;
+      }
+      else if(strcmp(lexemes[len], "if") == 0)
+      {
+        tokens[len] = ifsym;
+      }
+      else if(strcmp(lexemes[len], "fi") == 0)
+      {
+        tokens[len] = fisym;
+      }
+      else if(strcmp(lexemes[len], "then") == 0)
+      {
+        tokens[len] = thensym;
+      }
+      else if(strcmp(lexemes[len], "while") == 0)
+      {
+        tokens[len] = whilesym;
+      }
+      else if(strcmp(lexemes[len], "do") == 0)
+      {
+        tokens[len] = dosym;
+      }
+      else if(strcmp(lexemes[len], "od") == 0)
+      {
+        tokens[len] = odsym;
+      }
+      else if(strcmp(lexemes[len], "call") == 0)
+      {
+        tokens[len] = callsym;
+      }
+      else if(strcmp(lexemes[len], "const") == 0)
+      {
+        tokens[len] = constsym;
+      }
+      else if(strcmp(lexemes[len], "var") == 0)
+      {
+        tokens[len] = varsym;
+      }
+      else if(strcmp(lexemes[len], "procedure") == 0)
+      {
+        tokens[len] = procsym;
+      }
+      else if(strcmp(lexemes[len], "write") == 0)
+      {
+        tokens[len] = writesym;
+      }
+      else if(strcmp(lexemes[len], "read") == 0)
+      {
+        tokens[len] = readsym;
+      }
+      else if(strcmp(lexemes[len], "else") == 0)
+      {
+        tokens[len] = elsesym;
+      }
+      else
+      {
+        tokens[len] = identsym;
+      }
+      // incrementing length of lexemes and tokens list
+      len++;
+    }
+    
+    // if character is a number
+    else if(isdigit(character))
+    {
+      // initializing counter and first character of number
+      int counter = 0;
+      lexemes[len][counter++] = character;
+
+      // getting next character and checking if it is a number
+      int temp = fgetc(file);
+      while(temp != EOF && isdigit(temp))
+      {
+        // checking if number is too long
+        if(counter >= 5)
+        {
+          printf("Number is too long");
+          break;
+        }
+
+        // putting next character into lexeme
+        lexemes[len][counter++] = temp;
+        temp = fgetc(file);
+      }
+
+      // error if letter is next to digit
+      if(isalpha(temp))
+      {
+        printf("invalid number (has letters)");
+      }
+
+      // ungetting temp if it was another symbol after number
+      if(temp != EOF)
+      {
+        ungetc(temp, file);
+      }
+      
+      // adding null terminator to number and putting token in
+      lexemes[len][counter] = '\0';
+      tokens[len++] = numbersym;
+    }
+
+    // checking for special symbols
+    else if(character == '+')
+    {
+      lexemes[len][0] = character;
+      lexemes[len][1] = '\0';
+      tokens[len++] = plussym;
+    }
+    else if(character == '-')
+    {
+      lexemes[len][0] = character;
+      lexemes[len][1] = '\0';
+      tokens[len++] = minussym;
+    }
+    else if(character == '*')
+    {
+      lexemes[len][0] = character;
+      lexemes[len][1] = '\0';
+      tokens[len++] = multsym;
+    }
+    else if(character == '=')
+    {
+      lexemes[len][0] = character;
+      lexemes[len][1] = '\0';
+      tokens[len++] = eqsym;
+    }
+    else if(character == '(')
+    {
+      lexemes[len][0] = character;
+      lexemes[len][1] = '\0';
+      tokens[len++] = lparentsym;
+    }
+    else if(character == ')')
+    {
+      lexemes[len][0] = character;
+      lexemes[len][1] = '\0';
+      tokens[len++] = rparentsym;
+    }
+    else if(character == ',')
+    {
+      lexemes[len][0] = character;
+      lexemes[len][1] = '\0';
+      tokens[len++] = commasym;
+    }
+    else if(character == ';')
+    {
+      lexemes[len][0] = character;
+      lexemes[len][1] = '\0';
+      tokens[len++] = semicolonsym;
+    }
+    else if(character == '.')
+    {
+      lexemes[len][0] = character;
+      lexemes[len][1] = '\0';
+      tokens[len++] = periodsym;
+    }
+
+    // if encounters '<', using if and else statement to determine which special symbol
+    else if(character == '<')
+    {
+      int temp = fgetc(file);
+      if(temp == '>')
+      {
+        lexemes[len][0] = '<';
+        lexemes[len][1] = '>';
+        lexemes[len][2] = '\0';
+        tokens[len++] = neqsym;
+      }
+      else if(temp == '=')
+      {
+        lexemes[len][0] = '<';
+        lexemes[len][1] = '=';
+        lexemes[len][2] = '\0';
+        tokens[len++] = leqsym;
+      }
+      else 
+      {
+        ungetc(temp, file);
+        lexemes[len][0] = character;
+        lexemes[len][1] = '\0';
+        tokens[len++] = lessym; 
+      }
+    }
+
+    // if encounters '>', using if and else statement to determine which special symbol
+    else if(character == '>')
+    {
+      int temp = fgetc(file);
+      if(temp == '=')
+      {
+        lexemes[len][0] = '>';
+        lexemes[len][1] = '=';
+        lexemes[len][2] = '\0';
+        tokens[len++] = geqsym;
+      }
+      else 
+      {
+        ungetc(temp, file);
+        lexemes[len][0] = character;
+        lexemes[len][1] = '\0';
+        tokens[len++] = gtrsym;
+      }
+    }
+    
+    // if encounters ':', using if and else statement to determine if it is becomessym
+    else if(character == ':')
+    {
+      int temp = fgetc(file);
+      if(temp == '=')
+      {
+        lexemes[len][0] = ':';
+        lexemes[len][1] = '=';
+        lexemes[len][2] = '\0';
+        tokens[len++] = becomessym;
+      }
+      else 
+      {
+        printf("invalid symbol (no token representation)");
+        ungetc(file, temp);
+      }
+    }
+
+    // else statement to catch any outliers
+    else
+    {
+      printf("Invalid character scanned");
+    }
+
+      //lexeme Table
     printf("Lexeme Table:\n");
     printf("lexeme \t token type \n");
     for (int i = 0; i < num_lex; i++)
@@ -137,5 +456,6 @@ int main(int argc, char *argv[])
     {
         printf("%d \t %s \n", i, names[i]);
     }
+
   return 0;
 }
