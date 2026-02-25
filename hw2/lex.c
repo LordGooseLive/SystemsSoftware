@@ -170,31 +170,39 @@ int main(int argc, char *argv[])
       }
     }
 
+    // if character is a letter(identifier)
     else if(isalpha(character))
     {
+      // initializing first letter of identifier and counter
       int counter = 0;
       lexemes[len][counter++] = character;
 
+      // getting next character and checking if it is letter/number
       int temp = fgetc(file);
       while(temp != EOF && isalnum(temp))
       {
+        // checking length
         if(counter >= 11)
         {
           printf("Identifier is too long");
           break;
         }
 
-          lexemes[len][counter++] = temp;
-          temp = fgetc(file);
+        // inputting character into string and getting next character
+        lexemes[len][counter++] = temp;
+        temp = fgetc(file);
       }
-        
+      
+      // adding null terminator to end
       lexemes[len][counter] = '\0';
 
+      // if was not letter/number, ungetting character
       if(temp != EOF)
       {
         ungetc(temp, file);
       }
 
+      // checking if identifier is a reserved word
       if(strcmp(lexemes[len], "begin") == 0)
       {
         tokens[len] = beginsym;
@@ -259,41 +267,51 @@ int main(int argc, char *argv[])
       {
         tokens[len] = identsym;
       }
+      // incrementing length of lexemes and tokens list
       len++;
     }
     
+    // if character is a number
     else if(isdigit(character))
     {
+      // initializing counter and first character of number
       int counter = 0;
       lexemes[len][counter++] = character;
 
+      // getting next character and checking if it is a number
       int temp = fgetc(file);
       while(temp != EOF && isdigit(temp))
       {
+        // checking if number is too long
         if(counter >= 5)
         {
           printf("Number is too long");
           break;
         }
 
-          lexemes[len][counter++] = temp;
-          temp = fgetc(file);
+        // putting next character into lexeme
+        lexemes[len][counter++] = temp;
+        temp = fgetc(file);
       }
 
+      // error if letter is next to digit
       if(isalpha(temp))
       {
         printf("invalid number (has letters)");
       }
 
+      // ungetting temp if it was another symbol after number
       if(temp != EOF)
       {
         ungetc(temp, file);
       }
-        
+      
+      // adding null terminator to number and putting token in
       lexemes[len][counter] = '\0';
       tokens[len++] = numbersym;
     }
 
+    // checking for special symbols
     else if(character == '+')
     {
       lexemes[len][0] = character;
@@ -349,6 +367,7 @@ int main(int argc, char *argv[])
       tokens[len++] = periodsym;
     }
 
+    // if encounters '<', using if and else statement to determine which special symbol
     else if(character == '<')
     {
       int temp = fgetc(file);
@@ -375,6 +394,7 @@ int main(int argc, char *argv[])
       }
     }
 
+    // if encounters '>', using if and else statement to determine which special symbol
     else if(character == '>')
     {
       int temp = fgetc(file);
@@ -394,6 +414,7 @@ int main(int argc, char *argv[])
       }
     }
     
+    // if encounters ':', using if and else statement to determine if it is becomessym
     else if(character == ':')
     {
       int temp = fgetc(file);
@@ -411,6 +432,7 @@ int main(int argc, char *argv[])
       }
     }
 
+    // else statement to catch any outliers
     else
     {
       printf("Invalid character scanned");
