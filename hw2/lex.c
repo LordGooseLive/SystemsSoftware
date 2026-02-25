@@ -120,57 +120,61 @@ int main(int argc, char *argv[])
   while((character = fgetc(file)) != EOF )
   {
     
-  }
+    // skipping if encountering invisible characters
+    if(isspace(character))
+    {
+      continue;
+    }
 
     // skipping if encountering multi-line comments
     else if(character == '/')
     {
-      int temp  = fgetc(file);
-      int breakLoop = 1;
-      if(temp == '*')
-      {
-        // parsing through whole comment
-        while(breakLoop == 1)
+        int temp  = fgetc(file);
+        int breakLoop = 1;
+        if(temp == '*')
         {
-          character = fgetc(file);
-
-          // error catching if comment goes until EOF
-          if(character == EOF)
-          {
-            printf("error with multi-line comment");
-            breakLoop = 0;
-            continue;
-          }
-
-          // checking as might be end of multi-line comment
-          else if(character == '*')
-          {
-            temp = fgetc(file);
-            if(temp == '/')
+            // parsing through whole comment
+            while(breakLoop == 1)
             {
-              breakLoop = 0;
-              continue;
-            }
-            else
-            {
-              ungetc(temp, file);
-            }
-          }
+                character = fgetc(file);
 
-          // continuing to next character in comment
-          continue;
+                // error catching if comment goes until EOF
+                if(character == EOF)
+                {
+                    printf("error with multi-line comment");
+                    breakLoop = 0;
+                    continue;
+                }
+                    
+                // checking as might be end of multi-line comment
+                else if(character == '*')
+                {
+                    temp = fgetc(file);
+                    if(temp == '/')
+                    {
+                    breakLoop = 0;
+                    continue;
+                    }
+                    else
+                    {
+                    ungetc(temp, file);
+                    }
+                }
+
+                // continuing to next character in comment
+                continue;
+            }
+            continue;   
         }
-        continue;
-      }
 
-      // going back if not multi-line comment and just a slash
-      else
-      {
-        ungetc(temp, file);
-        lexemes[len][0] = '/';
-        lexemes[len][1] = '\0';
-        tokens[len++] = slashsym;
-      }
+        // going back if not multi-line comment and just a slash
+        else
+        {
+            ungetc(temp, file);
+            lexemes[num_lex][0] = '/';
+            lexemes[num_lex][1] = '\0';
+            tokens[num_lex++] = slashsym;
+        }
     }
 
     // if character is a letter(identifier)
@@ -178,7 +182,7 @@ int main(int argc, char *argv[])
     {
       // initializing first letter of identifier and counter
       int counter = 0;
-      lexemes[len][counter++] = character;
+      lexemes[num_lex][counter++] = character;
 
       // getting next character and checking if it is letter/number
       int temp = fgetc(file);
@@ -192,12 +196,12 @@ int main(int argc, char *argv[])
         }
 
         // inputting character into string and getting next character
-        lexemes[len][counter++] = temp;
+        lexemes[num_lex][counter++] = temp;
         temp = fgetc(file);
       }
       
       // adding null terminator to end
-      lexemes[len][counter] = '\0';
+      lexemes[num_lex][counter] = '\0';
 
       // if was not letter/number, ungetting character
       if(temp != EOF)
@@ -206,72 +210,72 @@ int main(int argc, char *argv[])
       }
 
       // checking if identifier is a reserved word
-      if(strcmp(lexemes[len], "begin") == 0)
+      if(strcmp(lexemes[num_lex], "begin") == 0)
       {
-        tokens[len] = beginsym;
+        tokens[num_lex] = beginsym;
       }
-      else if(strcmp(lexemes[len], "end") == 0)
+      else if(strcmp(lexemes[num_lex], "end") == 0)
       {
-        tokens[len] = endsym;
+        tokens[num_lex] = endsym;
       }
-      else if(strcmp(lexemes[len], "if") == 0)
+      else if(strcmp(lexemes[num_lex], "if") == 0)
       {
-        tokens[len] = ifsym;
+        tokens[num_lex] = ifsym;
       }
-      else if(strcmp(lexemes[len], "fi") == 0)
+      else if(strcmp(lexemes[num_lex], "fi") == 0)
       {
-        tokens[len] = fisym;
+        tokens[num_lex] = fisym;
       }
-      else if(strcmp(lexemes[len], "then") == 0)
+      else if(strcmp(lexemes[num_lex], "then") == 0)
       {
-        tokens[len] = thensym;
+        tokens[num_lex] = thensym;
       }
-      else if(strcmp(lexemes[len], "while") == 0)
+      else if(strcmp(lexemes[num_lex], "while") == 0)
       {
-        tokens[len] = whilesym;
+        tokens[num_lex] = whilesym;
       }
-      else if(strcmp(lexemes[len], "do") == 0)
+      else if(strcmp(lexemes[num_lex], "do") == 0)
       {
-        tokens[len] = dosym;
+        tokens[num_lex] = dosym;
       }
-      else if(strcmp(lexemes[len], "od") == 0)
+      else if(strcmp(lexemes[num_lex], "od") == 0)
       {
-        tokens[len] = odsym;
+        tokens[num_lex] = odsym;
       }
-      else if(strcmp(lexemes[len], "call") == 0)
+      else if(strcmp(lexemes[num_lex], "call") == 0)
       {
-        tokens[len] = callsym;
+        tokens[num_lex] = callsym;
       }
-      else if(strcmp(lexemes[len], "const") == 0)
+      else if(strcmp(lexemes[num_lex], "const") == 0)
       {
-        tokens[len] = constsym;
+        tokens[num_lex] = constsym;
       }
-      else if(strcmp(lexemes[len], "var") == 0)
+      else if(strcmp(lexemes[num_lex], "var") == 0)
       {
-        tokens[len] = varsym;
+        tokens[num_lex] = varsym;
       }
-      else if(strcmp(lexemes[len], "procedure") == 0)
+      else if(strcmp(lexemes[num_lex], "procedure") == 0)
       {
-        tokens[len] = procsym;
+        tokens[num_lex] = procsym;
       }
-      else if(strcmp(lexemes[len], "write") == 0)
+      else if(strcmp(lexemes[num_lex], "write") == 0)
       {
-        tokens[len] = writesym;
+        tokens[num_lex] = writesym;
       }
-      else if(strcmp(lexemes[len], "read") == 0)
+      else if(strcmp(lexemes[num_lex], "read") == 0)
       {
-        tokens[len] = readsym;
+        tokens[num_lex] = readsym;
       }
-      else if(strcmp(lexemes[len], "else") == 0)
+      else if(strcmp(lexemes[num_lex], "else") == 0)
       {
-        tokens[len] = elsesym;
+        tokens[num_lex] = elsesym;
       }
       else
       {
-        tokens[len] = identsym;
+        tokens[num_lex] = identsym;
       }
       // incrementing length of lexemes and tokens list
-      len++;
+      num_lex++;
     }
     
     // if character is a number
@@ -279,7 +283,7 @@ int main(int argc, char *argv[])
     {
       // initializing counter and first character of number
       int counter = 0;
-      lexemes[len][counter++] = character;
+      lexemes[num_lex][counter++] = character;
 
       // getting next character and checking if it is a number
       int temp = fgetc(file);
@@ -293,7 +297,7 @@ int main(int argc, char *argv[])
         }
 
         // putting next character into lexeme
-        lexemes[len][counter++] = temp;
+        lexemes[num_lex][counter++] = temp;
         temp = fgetc(file);
       }
 
@@ -310,64 +314,64 @@ int main(int argc, char *argv[])
       }
       
       // adding null terminator to number and putting token in
-      lexemes[len][counter] = '\0';
-      tokens[len++] = numbersym;
+      lexemes[num_lex][counter] = '\0';
+      tokens[num_lex++] = numbersym;
     }
 
     // checking for special symbols
     else if(character == '+')
     {
-      lexemes[len][0] = character;
-      lexemes[len][1] = '\0';
-      tokens[len++] = plussym;
+      lexemes[num_lex][0] = character;
+      lexemes[num_lex][1] = '\0';
+      tokens[num_lex++] = plussym;
     }
     else if(character == '-')
     {
-      lexemes[len][0] = character;
-      lexemes[len][1] = '\0';
-      tokens[len++] = minussym;
+      lexemes[num_lex][0] = character;
+      lexemes[num_lex][1] = '\0';
+      tokens[num_lex++] = minussym;
     }
     else if(character == '*')
     {
-      lexemes[len][0] = character;
-      lexemes[len][1] = '\0';
-      tokens[len++] = multsym;
+      lexemes[num_lex][0] = character;
+      lexemes[num_lex][1] = '\0';
+      tokens[num_lex++] = multsym;
     }
     else if(character == '=')
     {
-      lexemes[len][0] = character;
-      lexemes[len][1] = '\0';
-      tokens[len++] = eqsym;
+      lexemes[num_lex][0] = character;
+      lexemes[num_lex][1] = '\0';
+      tokens[num_lex++] = eqsym;
     }
     else if(character == '(')
     {
-      lexemes[len][0] = character;
-      lexemes[len][1] = '\0';
-      tokens[len++] = lparentsym;
+      lexemes[num_lex][0] = character;
+      lexemes[num_lex][1] = '\0';
+      tokens[num_lex++] = lparentsym;
     }
     else if(character == ')')
     {
-      lexemes[len][0] = character;
-      lexemes[len][1] = '\0';
-      tokens[len++] = rparentsym;
+      lexemes[num_lex][0] = character;
+      lexemes[num_lex][1] = '\0';
+      tokens[num_lex++] = rparentsym;
     }
     else if(character == ',')
     {
-      lexemes[len][0] = character;
-      lexemes[len][1] = '\0';
-      tokens[len++] = commasym;
+      lexemes[num_lex][0] = character;
+      lexemes[num_lex][1] = '\0';
+      tokens[num_lex++] = commasym;
     }
     else if(character == ';')
     {
-      lexemes[len][0] = character;
-      lexemes[len][1] = '\0';
-      tokens[len++] = semicolonsym;
+      lexemes[num_lex][0] = character;
+      lexemes[num_lex][1] = '\0';
+      tokens[num_lex++] = semicolonsym;
     }
     else if(character == '.')
     {
-      lexemes[len][0] = character;
-      lexemes[len][1] = '\0';
-      tokens[len++] = periodsym;
+      lexemes[num_lex][0] = character;
+      lexemes[num_lex][1] = '\0';
+      tokens[num_lex++] = periodsym;
     }
 
     // if encounters '<', using if and else statement to determine which special symbol
@@ -376,24 +380,24 @@ int main(int argc, char *argv[])
       int temp = fgetc(file);
       if(temp == '>')
       {
-        lexemes[len][0] = '<';
-        lexemes[len][1] = '>';
-        lexemes[len][2] = '\0';
-        tokens[len++] = neqsym;
+        lexemes[num_lex][0] = '<';
+        lexemes[num_lex][1] = '>';
+        lexemes[num_lex][2] = '\0';
+        tokens[num_lex++] = neqsym;
       }
       else if(temp == '=')
       {
-        lexemes[len][0] = '<';
-        lexemes[len][1] = '=';
-        lexemes[len][2] = '\0';
-        tokens[len++] = leqsym;
+        lexemes[num_lex][0] = '<';
+        lexemes[num_lex][1] = '=';
+        lexemes[num_lex][2] = '\0';
+        tokens[num_lex++] = leqsym;
       }
       else 
       {
         ungetc(temp, file);
-        lexemes[len][0] = character;
-        lexemes[len][1] = '\0';
-        tokens[len++] = lessym; 
+        lexemes[num_lex][0] = character;
+        lexemes[num_lex][1] = '\0';
+        tokens[num_lex++] = lessym; 
       }
     }
 
@@ -403,17 +407,17 @@ int main(int argc, char *argv[])
       int temp = fgetc(file);
       if(temp == '=')
       {
-        lexemes[len][0] = '>';
-        lexemes[len][1] = '=';
-        lexemes[len][2] = '\0';
-        tokens[len++] = geqsym;
+        lexemes[num_lex][0] = '>';
+        lexemes[num_lex][1] = '=';
+        lexemes[num_lex][2] = '\0';
+        tokens[num_lex++] = geqsym;
       }
       else 
       {
         ungetc(temp, file);
-        lexemes[len][0] = character;
-        lexemes[len][1] = '\0';
-        tokens[len++] = gtrsym;
+        lexemes[num_lex][0] = character;
+        lexemes[num_lex][1] = '\0';
+        tokens[num_lex++] = gtrsym;
       }
     }
     
@@ -423,10 +427,10 @@ int main(int argc, char *argv[])
       int temp = fgetc(file);
       if(temp == '=')
       {
-        lexemes[len][0] = ':';
-        lexemes[len][1] = '=';
-        lexemes[len][2] = '\0';
-        tokens[len++] = becomessym;
+        lexemes[num_lex][0] = ':';
+        lexemes[num_lex][1] = '=';
+        lexemes[num_lex][2] = '\0';
+        tokens[num_lex++] = becomessym;
       }
       else 
       {
@@ -441,7 +445,8 @@ int main(int argc, char *argv[])
       printf("Invalid character scanned");
     }
 
-      //lexeme Table
+    //Print all data
+    //lexeme Table
     printf("Lexeme Table:\n");
     printf("lexeme \t token type \n");
     for (int i = 0; i < num_lex; i++)
