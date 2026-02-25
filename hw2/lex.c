@@ -166,6 +166,97 @@ int main(int argc, char *argv[])
       }
     }
 
+    if(isalpha(character))
+    {
+      int counter = 0;
+      lexemes[len][counter++] = character;
+
+      int temp = fgetc(file);
+      while(temp != EOF && isalnum(temp))
+      {
+        if(counter > 10)
+        {
+          printf("Identifier is too long");
+          break;
+        }
+
+          lexemes[len][counter++] = temp;
+          temp = fgetc(file);
+      }
+        
+      lexemes[len][counter] = '\0';
+
+      if(temp != EOF)
+      {
+        ungetc(temp, file);
+      }
+
+      if(strcmp(lexemes[len], "begin") == 0)
+      {
+        tokens[len] = beginsym;
+      }
+      else if(strcmp(lexemes[len], "end") == 0)
+      {
+        tokens[len] = endsym;
+      }
+      else if(strcmp(lexemes[len], "if") == 0)
+      {
+        tokens[len] = ifsym;
+      }
+      else if(strcmp(lexemes[len], "fi") == 0)
+      {
+        tokens[len] = fisym;
+      }
+      else if(strcmp(lexemes[len], "then") == 0)
+      {
+        tokens[len] = thensym;
+      }
+      else if(strcmp(lexemes[len], "while") == 0)
+      {
+        tokens[len] = whilesym;
+      }
+      else if(strcmp(lexemes[len], "do") == 0)
+      {
+        tokens[len] = dosym;
+      }
+      else if(strcmp(lexemes[len], "od") == 0)
+      {
+        tokens[len] = odsym;
+      }
+      else if(strcmp(lexemes[len], "call") == 0)
+      {
+        tokens[len] = callsym;
+      }
+      else if(strcmp(lexemes[len], "const") == 0)
+      {
+        tokens[len] = constsym;
+      }
+      else if(strcmp(lexemes[len], "var") == 0)
+      {
+        tokens[len] = varsym;
+      }
+      else if(strcmp(lexemes[len], "procedure") == 0)
+      {
+        tokens[len] = procsym;
+      }
+      else if(strcmp(lexemes[len], "write") == 0)
+      {
+        tokens[len] = writesym;
+      }
+      else if(strcmp(lexemes[len], "read") == 0)
+      {
+        tokens[len] = readsym;
+      }
+      else if(strcmp(lexemes[len], "else") == 0)
+      {
+        tokens[len] = elsesym;
+      }
+      else
+      {
+        tokens[len] = identsym;
+      }
+      len++;
+    }
     
 
 
