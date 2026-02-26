@@ -88,9 +88,10 @@ int nameExists (char name [], char names[][11], int num_names); // Name present?
 int main(int argc, char *argv[])
 {
     // Variable declaration and Initialisation
-    char lexemes[50][12];   // Array of lexemes
-    char names [50][11];    // Array of names
-    int tokens[50];         // Array of tokens
+    char lexemes[MAX_TOKENS][100];   // Array of lexemes
+    char names [MAX_NAMES][100];    // Array of names
+    char curr_line[500];    // Stores current line to print at end
+    int tokens[MAX_TOKENS];         // Array of tokens
     int num_lex = 0;        // Number of lexemes/ tokens scanned
     int character = 0;      // Used to parse file 
     int num_names = 0;      // Number of names scanned
@@ -207,13 +208,6 @@ int main(int argc, char *argv[])
             int temp = fgetc(file);
             while(temp != EOF && isalnum(temp))
             {
-                // checking length
-                if(counter >= 11)
-                {
-                    printf("Identifier is too long\n");
-                    break;
-                }
-
                 // Inputting character into string and getting next character
                 lexemes[num_lex][counter++] = temp;
                 temp = fgetc(file);
@@ -307,12 +301,22 @@ int main(int argc, char *argv[])
 
             else // Not reserved word, so is an identifier
             {
-                tokens[num_lex] = identsym;
-                // If identifier is not already in name table, add it
-                if(!nameExists(lexemes[num_lex], names, num_names))
+                // If identifier meets length constraint, treat as identifier. Else, skipsym
+                if (counter < 12) 
+                {   
+                    tokens[num_lex] = identsym;
+
+                    // If identifier is not already in name table, add it
+                    if(!nameExists(lexemes[num_lex], names, num_names))
+                    {
+                        strcpy(names[num_names], lexemes[num_lex]);
+                        num_names++;
+                    }
+                }
+                
+                else
                 {
-                    strcpy(names[num_names], lexemes[num_lex]);
-                    num_names++;
+                    tokens[num_lex] = skipsym; // Invalid identifier, so skip
                 }
             }
 
@@ -332,20 +336,12 @@ int main(int argc, char *argv[])
 
             while(temp != EOF && isdigit(temp))
             {
-                // Checking if number is too long
-                if(counter >= 5)
-                {
-                    printf("Number is too long\n");
-                    break;
-                }
-
-                // Putting next character into lexeme
                 lexemes[num_lex][counter++] = temp;
                 temp = fgetc(file);
             }
 
             // Error if letter is next to digit
-            if(isalpha(temp))
+            if(!(isalnum(temp) && !isalpha(temp)))
             {
                 printf("Invalid number (has letters)\n");
             }
@@ -354,11 +350,22 @@ int main(int argc, char *argv[])
             if(temp != EOF)
             {
                 ungetc(temp, file);
+                counter--;
             }
             
-            // Adding null terminator to number and putting token in
+            // Adding null terminator to number and putting token in if valid
             lexemes[num_lex][counter] = '\0';
-            tokens[num_lex++] = numbersym;
+
+            if (counter < 6) // Valid number, so add token
+            {
+                tokens[num_lex++] = numbersym;
+            }
+
+            else
+            {
+                printf("Number is too long\n");
+                tokens[num_lex++] = skipsym; // Invalid number, so skip
+            }
         }
 
         // Checking for special symbols
@@ -506,12 +513,40 @@ int main(int argc, char *argv[])
 
     // --- Print all data ---
 
+    // Source programme
+    printf("Source Program:\n\n");
+    rewind(file); // Resets file pointer to beginning of file
+    while ((fgets(curr_line, 500, file)) != NULL) // Prints each line of source programme file
+    { 
+        printf("%s", curr_line);
+    }
+
     // Lexeme Table
-    printf("Lexeme Table:\n"); // Header
+    printf("\n\nLexeme Table:\n"); // Header
     printf("\nLexeme \t Token Type \n"); // Column titles
     for (int i = 0; i < num_lex; i++) // Iterating through all lexemes and tokens
     {
-        printf("%s \t %d \n", lexemes[i], tokens[i]);
+        if (tokens[i] != skipsym) // Valid lexeme so just print normally
+        {
+            printf("%s \t %d \n", lexemes[i], tokens[i]);
+        }
+
+        else // Determine type of invalid lexeme and print with error
+        {
+            if(isdigit(lexemes[i][0])) // Is number
+            {
+                printf("%s \t Number too long\n", lexemes[i]);
+            }
+            else if(isalpha(lexemes[i][0])) // Is identifier
+            {
+                printf("%s \t Identifier too long\n", lexemes[i]);
+            }
+
+            else // Is invalid symbol
+            {
+                printf("%s \t Invalid symbol\n", lexemes[i]);
+            }
+        }
     }
 
     // Name Table
@@ -519,15 +554,17 @@ int main(int argc, char *argv[])
     printf("\nIndex \t Name\n"); // Column titles
     for (int i = 0; i < num_names; i++) // Iterating through all names
     {
-        printf("%d \t %s \n", i, names[i]);
+        printf("%d \t %s\n", i, names[i]);
     }
 
     // Token list
-    printf("\n Token List:\n\n"); // Header
+    printf("\nToken List:\n\n"); // Header
     for (int i = 0; i < num_lex; i++) // Iterating through all tokens
     {
-        printf("%s ", tokens[i]);
+        printf("%d ", tokens[i]);
     }
+
+    printf("\n\n"); //whitespace after programme ends
 
     return 0; // Everything went well
 }
