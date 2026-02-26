@@ -38,8 +38,8 @@ Due Date: Monday, February 3, 2026
 #include <ctype.h>
 
 //REMOVE BEFORE SUBMISSION
-#define MAX_TOKENS 50
-#define MAX_NAMES 50
+#define MAX_TOKENS 100
+#define MAX_NAMES 100
 
 typedef enum
 {
@@ -81,7 +81,7 @@ typedef enum
 
 // Function prototypes
 int streq (char stringA [], char stringB []); // String equal? 1 : 0
-int nameExists (char name [], char names[][11], int num_names); // Name present? 1 : 0
+int nameExists (char name [], char names[][100], int num_names); // Name present? 1 : 0
 
 //--- Programme Body ---
 
@@ -582,7 +582,7 @@ int streq (char stringA [], char stringB []) // String equal? 1 : 0
 }
 
 // Checks if the name is already in name table.  Returns true or false
-int nameExists (char name [], char names[][11], int num_names) // Name present? 1 : 0
+int nameExists (char name [], char names[][100], int num_names) // Name present? 1 : 0
 {
     int retval = 0; // False by default
 
