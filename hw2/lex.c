@@ -89,7 +89,7 @@ int main(int argc, char *argv[])
     int tokens[50];         // array of tokens
     int num_lex = 0;        // number of lexemes/ tokens scanned
     int character = 0;      // used to parse file 
-    int num_names = 0;
+    int num_names = 0;      //number of names scanned
     FILE *file = NULL;      //stores input file
 
     for (int i = 0; i < argc; i++)
@@ -474,7 +474,7 @@ int main(int argc, char *argv[])
         //Print all data
         //lexeme Table
         printf("Lexeme Table:\n");
-        printf("lexeme \t token type \n");
+        printf("\nlexeme \t token type \n");
 
         for (int i = 0; i < num_lex; i++)
         {
@@ -483,7 +483,7 @@ int main(int argc, char *argv[])
 
         //Name Table
         printf("\nName Table:\n");
-        printf("Index \t Name\n");
+        printf("\nIndex \t Name\n");
         for (int i = 0; i < num_names; i++)
         {
             printf("%d \t %s \n", i, names[i]);
