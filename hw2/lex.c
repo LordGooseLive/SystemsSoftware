@@ -88,14 +88,14 @@ int nameExists (char name [], char names[][100], int num_names); // Name present
 int main(int argc, char *argv[])
 {
     // Variable declaration and Initialisation
-    char lexemes[MAX_TOKENS][100];   // Array of lexemes
+    char lexemes[MAX_TOKENS][100];  // Array of lexemes
     char names [MAX_NAMES][100];    // Array of names
-    char curr_line[500];    // Stores current line to print at end
+    char curr_line[500];            // Stores current line to print at end
     int tokens[MAX_TOKENS];         // Array of tokens
-    int num_lex = 0;        // Number of lexemes/ tokens scanned
-    int character = 0;      // Used to parse file 
-    int num_names = 0;      // Number of names scanned
-    FILE *file = NULL;      // Stores input file
+    int num_lex = 0;                // Number of lexemes/ tokens scanned
+    int character = 0;              // Used to parse file 
+    int num_names = 0;              // Number of names scanned
+    FILE *file = NULL;              // Stores input file
 
     // --- Validate inputs ---
 
@@ -544,7 +544,7 @@ int main(int argc, char *argv[])
 
             else // Is invalid symbol
             {
-                printf("%s \t Invalid symbol\n", lexemes[i]);
+                printf("%s \t Invalid symbols\n", lexemes[i]);
             }
         }
     }
@@ -563,8 +563,6 @@ int main(int argc, char *argv[])
     {
         printf("%d ", tokens[i]);
     }
-
-    printf("\n\n"); //whitespace after programme ends
 
     return 0; // Everything went well
 }
