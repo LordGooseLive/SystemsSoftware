@@ -31,10 +31,15 @@ Instructor: Dr. Jie Lin
 Due Date: Monday, February 3, 2026
 */
 
+//includes, macros and enums
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+
+//REMOVE BEFORE SUBMISSION
+#define MAX_TOKENS 50
+#define MAX_NAMES 50
 
 typedef enum
 {
@@ -74,30 +79,33 @@ typedef enum
   becomessym    // :=
 } TokenType;
 
+//function prototypes
 int streq (char stringA [], char stringB []); //String equal? 1 : 0
 int nameExists (char name [], char names[][11], int num_names); //checks if the name is already in name table
-//REMOVE BEFORE SUBMISSION
-#define MAX_TOKENS 50
-#define MAX_NAMES 50
 
+//--- programme body ---
 
 int main(int argc, char *argv[])
 {
     // Variable declaration and Initialisation
     char lexemes[50][12];   // array of lexemes
-    char names [50][11];    //array of names
+    char names [50][11];    // array of names
     int tokens[50];         // array of tokens
     int num_lex = 0;        // number of lexemes/ tokens scanned
     int character = 0;      // used to parse file 
-    int num_names = 0;      //number of names scanned
-    FILE *file = NULL;      //stores input file
+    int num_names = 0;      // number of names scanned
+    FILE *file = NULL;      // stores input file
 
+    //--- validate inputs ---
+
+    //print all inputs
     for (int i = 0; i < argc; i++)
     {
         printf("argv[%d] = %s\n", i, argv[i]);
     }
     printf("\n");
 
+    //ensure only one input is given and it can be accessed
     if (argc == 2)
     {
         // Opening file for input
@@ -109,7 +117,7 @@ int main(int argc, char *argv[])
         }
     }
 
-    // error message if not valid number of arguments
+    // print error message if invalid number of arguments
     else
     {
         printf("No extra arguments provided.\n");
@@ -117,13 +125,23 @@ int main(int argc, char *argv[])
         return 1;
     }
 
-    // parsing character by character until end of file
+    //--- parsing, character by character, until end of file---
+
+    /*  First checks if char that we collect is a comment delimiter
+        or invisible character. skips comments and invisible characters.
+        Next, collects lexemes and attempts to match with token type
+        using enum TokenType. 
+        If lexeme is alphanumeric but not a reserve word, it is a name. 
+        Stores name to name table if it is new.
+        If lexeme is a number, ensures it is valid then stores.
+        if lexeme is a special symbol, stores.  
+    */
     while((character = fgetc(file)) != EOF )
     {
         // skipping if encountering invisible characters
         if(isspace(character))
         {
-        continue;
+            continue;
         }
 
         // skipping if encountering multi-line comments
@@ -193,8 +211,8 @@ int main(int argc, char *argv[])
                 // checking length
                 if(counter >= 11)
                 {
-                printf("Identifier is too long");
-                break;
+                    printf("Identifier is too long");
+                    break;
                 }
 
                 // inputting character into string and getting next character
@@ -265,6 +283,7 @@ int main(int argc, char *argv[])
             else if(streq(lexemes[num_lex], "var"))
             {
                 tokens[num_lex] = varsym;
+
             }
 
             else if(streq(lexemes[num_lex], "procedure"))
@@ -290,6 +309,12 @@ int main(int argc, char *argv[])
             else
             {
                 tokens[num_lex] = identsym;
+                // if identifier is not already in name table, add it
+                if(!nameExists(lexemes[num_lex], names, num_names))
+                {
+                    strcpy(names[num_names], lexemes[num_lex]);
+                    num_names++;
+                }
             }
 
             // incrementing length of lexemes and tokens list
@@ -470,36 +495,40 @@ int main(int argc, char *argv[])
         {
             printf("Invalid character scanned");
         }
+    }
 
-        //Print all data
-        //lexeme Table
-        printf("Lexeme Table:\n");
-        printf("\nlexeme \t token type \n");
+    //--- Print all data ---
 
-        for (int i = 0; i < num_lex; i++)
-        {
-            printf("%s \t %d \n", lexemes[i], tokens[i]);
-        }
+    //Lexeme Table
+    printf("Lexeme Table:\n");
+    printf("\nlexeme \t token type \n");
 
-        //Name Table
-        printf("\nName Table:\n");
-        printf("\nIndex \t Name\n");
-        for (int i = 0; i < num_names; i++)
-        {
-            printf("%d \t %s \n", i, names[i]);
-        }
+    for (int i = 0; i < num_lex; i++)
+    {
+        printf("%s \t %d \n", lexemes[i], tokens[i]);
+    }
 
-        //print tokens
-        printf("\n Token List:\n\n");
-        for (int i = 0; i < num_lex; i++)
-        {
-            printf("%s", tokens[i]);
-        }
+    //Name Table
+    printf("\nName Table:\n");
+    printf("\nIndex \t Name\n");
+    for (int i = 0; i < num_names; i++)
+    {
+        printf("%d \t %s \n", i, names[i]);
+    }
+
+    //Token list
+    printf("\n Token List:\n\n");
+    for (int i = 0; i < num_lex; i++)
+    {
+        printf("%s", tokens[i]);
     }
 
     return 0; //everything went well
 }
 
+// ---helper function definitions ---
+
+//function to check if two strings are identical. returns true or false
 int streq (char stringA [], char stringB []) //String equal? 1 : 0
 {
     if (strcmp(stringA, stringB) == 0)
@@ -508,15 +537,17 @@ int streq (char stringA [], char stringB []) //String equal? 1 : 0
         return 0; //false
 }
 
-int nameExists (char name [], char names[][11], int num_names) //checks if the name is already in name table
+//checks if the name is already in name table. returns true or false
+int nameExists (char name [], char names[][11], int num_names) //name present? 1 : 0
 {
-    int retval = 0;
+    int retval = 0; //false by default
+
     for (int i = 0; i < num_names; i++)
     {
         if (streq (name, names[i]))
         {   
-            retval = 1;
-            break;
+            retval = 1; //sets true since name is present
+            break; //no need to continue since we found the name
         }
     }
     return retval;
