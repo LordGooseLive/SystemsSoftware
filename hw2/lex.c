@@ -341,7 +341,7 @@ int main(int argc, char *argv[])
             }
 
             // Error if letter is next to digit
-            if(!(isdigit(temp)))
+            if(isalpha(temp))
             {
                 printf("Invalid number (has letters)\n"); //to be removed before submission
             }
@@ -350,7 +350,6 @@ int main(int argc, char *argv[])
             if(temp != EOF)
             {
                 ungetc(temp, file);
-                counter--;
             }
             
             // Adding null terminator to number and putting token in if valid
