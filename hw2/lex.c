@@ -98,14 +98,6 @@ int main(int argc, char *argv[])
     FILE *file = NULL;              // Stores input file
 
     // --- Validate inputs ---
-
-    // Print all inputs
-    for (int i = 0; i < argc; i++)
-    {
-        printf("argv[%d] = %s\n", i, argv[i]);
-    }
-    printf("\n");
-
     // Ensure only one input is given and it can be accessed
     if (argc == 2)
     {
@@ -209,7 +201,10 @@ int main(int argc, char *argv[])
             while(temp != EOF && isalnum(temp))
             {
                 // Inputting character into string and getting next character
-                lexemes[num_lex][counter++] = temp;
+                if(counter < 99)
+                {
+                  lexemes[num_lex][counter++] = temp;
+                }
                 temp = fgetc(file);
             }
             
@@ -336,14 +331,30 @@ int main(int argc, char *argv[])
 
             while(temp != EOF && isdigit(temp))
             {
+              if(counter < 99)
+              {
                 lexemes[num_lex][counter++] = temp;
-                temp = fgetc(file);
+              }
+              temp = fgetc(file);
             }
+
+            // has letter flag
+            int hasLetter = 0;
 
             // Error if letter is next to digit
             if(isalpha(temp))
             {
-                printf("Invalid number (has letters)\n"); //to be removed before submission
+              // error as there is letter next to number
+              hasLetter = 1;
+
+              while(temp != EOF && isalnum(temp))
+              {
+                if(counter < 99)
+                {
+                  lexemes[num_lex][counter++] = temp;
+                }
+                temp = fgetc(file);
+              }
             }
 
             // Ungetting temp if it was another symbol after number
@@ -355,11 +366,15 @@ int main(int argc, char *argv[])
             // Adding null terminator to number and putting token in if valid
             lexemes[num_lex][counter] = '\0';
 
-            if (counter < 6) // Valid number, so add token
+            // skipsym if number has letters
+            if(hasLetter == 1)
+            {
+              tokens[num_lex++] = skipsym;
+            }
+            else if (counter < 6) // Valid number, so add token
             {
                 tokens[num_lex++] = numbersym;
             }
-
             else
             {
                 printf("Number is too long\n");
