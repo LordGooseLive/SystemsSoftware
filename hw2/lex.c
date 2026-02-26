@@ -341,9 +341,9 @@ int main(int argc, char *argv[])
             }
 
             // Error if letter is next to digit
-            if(!(isalnum(temp) && !isalpha(temp)))
+            if(!(isdigit(temp)))
             {
-                printf("Invalid number (has letters)\n");
+                printf("Invalid number (has letters)\n"); //to be removed before submission
             }
 
             // Ungetting temp if it was another symbol after number
