@@ -1,1 +1,3 @@
-a+b;begin;a,c,c,;
+begin
+    x :=  12345678910000;
+end.

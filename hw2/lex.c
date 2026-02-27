@@ -377,7 +377,7 @@ int main(int argc, char *argv[])
             }
             else
             {
-                printf("Number is too long\n");
+                //printf("Number is too long\n");
                 tokens[num_lex++] = skipsym; // Invalid number, so skip
             }
         }
@@ -513,7 +513,7 @@ int main(int argc, char *argv[])
 
             else 
             {
-                printf("Invalid symbol (no token representation)\n");
+                //printf("Invalid symbol (no token representation)\n");
                 ungetc(temp, file);
             }
         }
@@ -576,6 +576,23 @@ int main(int argc, char *argv[])
     for (int i = 0; i < num_lex; i++) // Iterating through all tokens
     {
         printf("%d ", tokens[i]);
+
+        if (tokens[i] == identsym) // If identifier, print name-table index 
+        {
+            for (int j = 0; j < num_names; j++) // Find name through itteration like in nameExists()
+            {
+                if(streq(lexemes[i], names[j]))
+                {
+                    printf("%d ", j); // j is the index of the identifier in the name table
+                    break;
+                }
+            }
+        }
+
+        else if (tokens[i] == numbersym) // If number, print the number itself
+        {
+            printf("%s ", lexemes[i]);
+        }
     }
 
     return 0; // Everything went well
@@ -598,7 +615,7 @@ int nameExists (char name [], char names[][100], int num_names) // Name present?
 {
     int retval = 0; // False by default
 
-    for (int i = 0; i < num_names; i++)
+    for (int i = 0; i < num_names; i++) // Find name through itteration
     {
         if (streq (name, names[i]))
         {   
