@@ -38,8 +38,7 @@ Due Date: Monday, February 3, 2026
 #include <ctype.h>
 
 //REMOVE BEFORE SUBMISSION
-#define MAX_TOKENS 100
-#define MAX_NAMES 100
+#define MAX 550
 
 typedef enum
 {
@@ -81,21 +80,21 @@ typedef enum
 
 // Function prototypes
 int streq (char stringA [], char stringB []); // String equal? 1 : 0
-int nameExists (char name [], char names[][100], int num_names); // Name present? 1 : 0
+int nameExists (char name [], char names[][MAX], int num_names); // Name present? 1 : 0
 
 //--- Programme Body ---
 
 int main(int argc, char *argv[])
 {
     // Variable declaration and Initialisation
-    char lexemes[MAX_TOKENS][100];  // Array of lexemes
-    char names [MAX_NAMES][100];    // Array of names
-    char curr_line[500];            // Stores current line to print at end
-    int tokens[MAX_TOKENS];         // Array of tokens
-    int num_lex = 0;                // Number of lexemes/ tokens scanned
-    int character = 0;              // Used to parse file 
-    int num_names = 0;              // Number of names scanned
-    FILE *file = NULL;              // Stores input file
+    char lexemes[MAX][MAX];  // Array of lexemes
+    char names [MAX][MAX];   // Array of names
+    char curr_line[MAX];     // Stores current line to print at end
+    int tokens[MAX];         // Array of tokens
+    int num_lex = 0;         // Number of lexemes/ tokens scanned
+    int character = 0;       // Used to parse file 
+    int num_names = 0;       // Number of names scanned
+    FILE *file = NULL;       // Stores input file
 
     // --- Validate inputs ---
     // Ensure only one input is given and it can be accessed
@@ -595,6 +594,7 @@ int main(int argc, char *argv[])
         }
     }
 
+    printf("\n"); // New line to searate ouput from terminal
     return 0; // Everything went well
 }
 
@@ -611,7 +611,7 @@ int streq (char stringA [], char stringB []) // String equal? 1 : 0
 }
 
 // Checks if the name is already in name table.  Returns true or false
-int nameExists (char name [], char names[][100], int num_names) // Name present? 1 : 0
+int nameExists (char name [], char names[][MAX], int num_names) // Name present? 1 : 0
 {
     int retval = 0; // False by default
 
