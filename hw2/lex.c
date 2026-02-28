@@ -37,9 +37,6 @@ Due Date: Monday, February 3, 2026
 #include <string.h>
 #include <ctype.h>
 
-//REMOVE BEFORE SUBMISSION
-#define MAX 550
-
 typedef enum
 {
     skipsym = 1,  // Skip / ignore token
@@ -80,17 +77,17 @@ typedef enum
 
 // Function prototypes
 int streq (char stringA [], char stringB []); // String equal? 1 : 0
-int nameExists (char name [], char names[][MAX], int num_names); // Name present? 1 : 0
+int nameExists (char name [], char names[][550], int num_names); // Name present? 1 : 0
 
 //--- Programme Body ---
 
 int main(int argc, char *argv[])
 {
     // Variable declaration and Initialisation
-    char lexemes[MAX][MAX];  // Array of lexemes
-    char names [MAX][MAX];   // Array of names
-    char curr_line[MAX];     // Stores current line to print at end
-    int tokens[MAX];         // Array of tokens
+    char lexemes[550][550];  // Array of lexemes
+    char names [550][550];   // Array of names
+    char curr_line[550];     // Stores current line to print at end
+    int tokens[550];         // Array of tokens
     int num_lex = 0;         // Number of lexemes/ tokens scanned
     int character = 0;       // Used to parse file 
     int num_names = 0;       // Number of names scanned
@@ -611,7 +608,7 @@ int streq (char stringA [], char stringB []) // String equal? 1 : 0
 }
 
 // Checks if the name is already in name table.  Returns true or false
-int nameExists (char name [], char names[][MAX], int num_names) // Name present? 1 : 0
+int nameExists (char name [], char names[][550], int num_names) // Name present? 1 : 0
 {
     int retval = 0; // False by default
 
