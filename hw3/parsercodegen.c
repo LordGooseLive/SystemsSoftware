@@ -534,6 +534,42 @@ int main(int argc, char *argv[])
             printf("Invalid character scanned");
         }
     }
+
+    // --- Parser ---
+    // A deterministic, recursive-descent parser for PL/0 grammar.
+    // in-progress
+    char line[550]; // Stores current line of tokens
+    char add_token[3]; // Stores token to add to line
+
+    for (int i = 0; i < num_lex; i++) // Loop through tokens until we reach periodsym.
+    {
+        if (tokens[i] == periodsym) //periodsym indicates end of programme
+        {
+            break;
+        }
+
+        //clear line and add_token
+        line[0] = '\0';
+        add_token[0] = '\0';
+
+        // Get tokens until semicolonsym is consumed
+        while (i < num_lex && tokens[i] != semicolonsym)
+        {
+            printf("Token: %d, Lexeme: %s\n", tokens[i], lexemes[i]); //for testing
+            sprintf(add_token, "%d ", tokens[i]); // Convert token to string and add space
+            strcat(line, add_token); // Add token to line
+            i++;
+        }
+
+        //determine grammar rule for line
+        
+    }
+
+
+
+    // --- Code Generator ---
+    // Generates PM/0 assembly code
+    // to be implemented
     
     return 0;
 }
