@@ -72,7 +72,32 @@ typedef enum
     semicolonsym, // ;
     periodsym,    // .
     becomessym    // :=
-} TokenType;
+} tokenType;
+
+typedef enum
+{
+    fileNull = 1, //file read error
+    skipsymPresent, //lexical analysis error
+    // Parsing errors:
+    periodExpected, // program must end with period
+    identifierExpected, // const, var, and read keywords must be followed by identifier
+    duplicateSymbolName, //symbol name has already been declared
+    constantAssignmentSymbolExpected, //constants must be assigned with =
+    NumberExpected, // constants must be assigned an integer value
+    semicolonExpected, // constant and variable declarations must be followed by a semicolon
+    undeclaredIdentifier, // undeclared identifier
+    cannotAlterNonVariable, // only variable values may be altered
+    nonConstantIdentiferExpected, // assignment statements must use :=
+    endExpected, // begin must be followed by end
+    thenExpected, // if must be followed by then
+    doExpected, // while must be followed by do
+    odExpected, // do must be followed by od
+    fiExpected, // if-then statement must end with fi
+    comparisonExpected, // condition must contain comparison operator
+    rightParenthesisExpected, // right parenthesis must follow left parenthesis
+    arithmeticSymbolsExpected // arithmetic equations must contain operands, parentheses, numbers, or symbols
+    // Code generation errors:
+} errorCode;
 
 // Function prototypes
 int streq (char stringA [], char stringB []); // String equal? 1 : 0
@@ -81,14 +106,17 @@ int nameExists (char name [], char names[][550], int num_names); // Name present
 int main(int argc, char *argv[])
 {
     // Variable declaration and initialisation
-    char lexemes[550][550];  // Array of lexemes
-    char names [550][550];   // Array of names
-    char curr_line[550];     // Stores current line to print at end
-    int tokens[550];         // Array of tokens
-    int num_lex = 0;         // Number of lexemes/ tokens scanned
-    int character = 0;       // Used to parse file 
-    int num_names = 0;       // Number of names scanned
-    FILE *file = NULL;   // Points to PL/0 source file
+    char lexemes[550][550]; // Array of lexemes
+    char names [550][550];  // Array of names
+    char curr_line[550];    // Stores current line to print at end
+    int tokens[550];        // Array of tokens
+    int num_lex = 0;        // Number of lexemes/ tokens scanned
+    int character = 0;      // Used to parse file 
+    int num_names = 0;      // Number of names scanned
+    FILE *file = NULL;      // Points to PL/0 source file
+    FILE *fOut = fopen("elf.txt", "w"); // Output file with machine code and/ or error message
+    int parseFlag = 0;      // Signals if there is an error during parsing
+    int pCurr = 0;          // Index of current token being parsed
 
     // --- Validate inputs ---
     // Print all command-line arguments
@@ -128,7 +156,7 @@ int main(int argc, char *argv[])
         }
     }   // End of input validation
 
-    //--- Parsing, character by character, until end of file---
+    //--- Lexical Analyser---
 
     /*   - First checks if char is a comment delimiter or invisible character. 
             - skips comments and invisible characters.
@@ -322,6 +350,7 @@ int main(int argc, char *argv[])
                 else
                 {
                     tokens[num_lex] = skipsym; // Invalid identifier, so skip
+                    exit(errorHandling(skipsymPresent, fOut));
                 }
             }
 
@@ -379,7 +408,9 @@ int main(int argc, char *argv[])
             // skipsym if number has letters
             if(hasLetter == 1)
             {
-              tokens[num_lex++] = skipsym;
+                tokens[num_lex++] = skipsym;
+                printf("Error: Scanning error detected by lexer (skipsym present)\n");
+                exit(errorHandling(skipsymPresent, fOut));
             }
             else if (counter < 6) // Valid number, so add token
             {
@@ -389,6 +420,8 @@ int main(int argc, char *argv[])
             {
                 //printf("Number is too long\n");
                 tokens[num_lex++] = skipsym; // Invalid number, so skip
+                printf("Error: Scanning error detected by lexer (skipsym present)\n");
+                exit(errorHandling(skipsymPresent, fOut));
             }
         }
 
@@ -538,7 +571,7 @@ int main(int argc, char *argv[])
     // --- Parser ---
     // A deterministic, recursive-descent parser for PL/0 grammar.
     // in-progress
-    char line[550]; // Stores current line of tokens
+    /*char line[550]; // Stores current line of tokens
     char add_token[3]; // Stores token to add to line
 
     for (int i = 0; i < num_lex; i++) // Loop through tokens until we reach periodsym.
@@ -553,7 +586,7 @@ int main(int argc, char *argv[])
         add_token[0] = '\0';
 
         // Get tokens until semicolonsym is consumed
-        while (i < num_lex && tokens[i] != semicolonsym)
+        while (i < num_lex && tokens[i] != semicolonsym\
         {
             printf("Token: %d, Lexeme: %s\n", tokens[i], lexemes[i]); //for testing
             sprintf(add_token, "%d ", tokens[i]); // Convert token to string and add space
@@ -562,10 +595,20 @@ int main(int argc, char *argv[])
         }
 
         //determine grammar rule for line
-        
+        if (strcmp(line,""))
+            {}
+    }*/
+
+    // Call first Grammar rule to begin parsing
+    if (!parseFlag == && pCurr < num_lex)
+    {
+        printf("Parsing successful\n");
     }
 
-
+    else
+    {
+        exit(errorHandling(parseFlag, fOut));
+    }
 
     // --- Code Generator ---
     // Generates PM/0 assembly code
@@ -574,7 +617,41 @@ int main(int argc, char *argv[])
     return 0;
 }
 
-// ---Helper function definitions ---
+/*  - called in exit ie. exit(errorHandling(errorCode));
+    - Catches an errorcode thrown by other functions. 
+    - Builds a message to print to stdout and elf.txt
+    - Prints message and returns errorCode
+*/
+int errorHandling (int errorCode, FILE* fOut)
+{
+    //Variable declaration
+    char errorMessage [550] = "\n --- ERROR: ";
+
+    //Error Signaling
+    printf("\n********************************");
+
+    //Error detailing
+    switch (errorCode)
+    {
+        case fileNull:
+        {
+            strcat(errorMessage, "file read error");
+            break;
+        }
+    }
+
+    //close error message
+    strcat(errorMessage, " ---\n");
+
+    //output to stdio and elf.txt
+    printf(errorMessage);
+    fprintf(fOut, errorMessage);
+
+    //return errorCode to caller exit()
+    return errorCode;
+}
+
+// --- Lexical Analyser helper function definitions ---
 
 // Checks if two strings are identical. Returns true or false
 int streq (char stringA [], char stringB []) // String equal? 1 : 0
@@ -601,3 +678,76 @@ int nameExists (char name [], char names[][550], int num_names) // Name present?
     }
     return retval;
 }
+
+// --- Parser helper function definitions ---
+int program ()
+{
+
+}
+
+int block ()
+{
+
+}
+
+int constDeclaration ()
+{
+
+}
+
+int varDeclaration ()
+{
+
+}
+
+int statement ()
+{
+
+}
+
+int condition ()
+{
+
+}
+
+int expression ()
+{
+
+}
+
+int term ()
+{
+
+}
+
+int factor ()
+{
+
+}
+
+int number ()
+{
+
+}
+
+int identifier ()
+{
+
+}
+
+int relOp ()
+{
+
+}
+
+int digit ()
+{
+
+}
+
+int letter ()
+{
+
+}
+
+// --- Code Generator helper function definitions ---
