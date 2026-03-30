@@ -1,0 +1,6 @@
+--- Arav ---
+-   correct all return statements to use new error handling system
+-   correct initial non-terminal call in parser
+-   flesh out non-terminal functions
+
+--- Latrell ---
