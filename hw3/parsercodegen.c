@@ -600,7 +600,8 @@ int main(int argc, char *argv[])
     }*/
 
     // Call first Grammar rule to begin parsing
-    if (!parseFlag == && pCurr < num_lex)
+    parseFlag = program();// EDIT when function defined
+    if (!parseFlag) // if parseFlag == 0 then no errors
     {
         printf("Parsing successful\n");
     }
@@ -617,7 +618,9 @@ int main(int argc, char *argv[])
     return 0;
 }
 
-/*  - called in exit ie. exit(errorHandling(errorCode));
+/*  - called in exit eg. "exit(errorHandling(errorCode, outputFile));"
+      where "errorCode" is a value of enum errorCode and outputFile
+      is the pointer to the output file (currently fOut)
     - Catches an errorcode thrown by other functions. 
     - Builds a message to print to stdout and elf.txt
     - Prints message and returns errorCode
