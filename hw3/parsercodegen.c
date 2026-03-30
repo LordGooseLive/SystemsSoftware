@@ -76,14 +76,18 @@ typedef enum
 
 typedef enum
 {
-    fileNull = 1, //file read error
+    noError = 0,
+    miscError, // general error 
+    inputNull, //input file read error
+    outputNull, //output file read error
     skipsymPresent, //lexical analysis error
+
     // Parsing errors:
     periodExpected, // program must end with period
     identifierExpected, // const, var, and read keywords must be followed by identifier
     duplicateSymbolName, //symbol name has already been declared
     constantAssignmentSymbolExpected, //constants must be assigned with =
-    NumberExpected, // constants must be assigned an integer value
+    numberExpected, // constants must be assigned an integer value
     semicolonExpected, // constant and variable declarations must be followed by a semicolon
     undeclaredIdentifier, // undeclared identifier
     cannotAlterNonVariable, // only variable values may be altered
@@ -93,11 +97,21 @@ typedef enum
     doExpected, // while must be followed by do
     odExpected, // do must be followed by od
     fiExpected, // if-then statement must end with fi
-    comparisonExpected, // condition must contain comparison operator
+    comparatorExpected, // condition must contain comparison operator
     rightParenthesisExpected, // right parenthesis must follow left parenthesis
     arithmeticSymbolsExpected // arithmetic equations must contain operands, parentheses, numbers, or symbols
+
     // Code generation errors:
 } errorCode;
+
+// Global Variables
+FILE *file = NULL;      // Points to PL/0 source file
+FILE *fOut = NULL; // Output file with machine code and/ or error message
+char lexemes[550][550]; // Array of lexemes
+char names [550][550];  // Array of names
+int tokens[550];        // Array of tokens
+int num_lex = 0;        // Number of lexemes/ tokens scanned
+int num_names = 0;      // Number of names scanned
 
 // Function prototypes
 int streq (char stringA [], char stringB []); // String equal? 1 : 0
@@ -106,19 +120,11 @@ int nameExists (char name [], char names[][550], int num_names); // Name present
 int main(int argc, char *argv[])
 {
     // Variable declaration and initialisation
-    char lexemes[550][550]; // Array of lexemes
-    char names [550][550];  // Array of names
-    char curr_line[550];    // Stores current line to print at end
-    int tokens[550];        // Array of tokens
-    int num_lex = 0;        // Number of lexemes/ tokens scanned
     int character = 0;      // Used to parse file 
-    int num_names = 0;      // Number of names scanned
-    FILE *file = NULL;      // Points to PL/0 source file
-    FILE *fOut = fopen("elf.txt", "w"); // Output file with machine code and/ or error message
     int parseFlag = 0;      // Signals if there is an error during parsing
     int pCurr = 0;          // Index of current token being parsed
 
-    // --- Validate inputs ---
+    // --- Validate inputs and output ---
     // Print all command-line arguments
     printf("argc = %d\n", argc);
 
@@ -132,10 +138,17 @@ int main(int argc, char *argv[])
     {
         // Opening file for input
         file = fopen(argv[1], "r");
+        fOut = fopen("elf.txt", "w");
         if (file == NULL)
         {
             printf("Input file could not be opened\n");
-            return 1;
+            return errorHandling(inputNull);
+        }
+
+        else if (fOut == NULL)
+        {
+            printf("Output file could not be opened\n");
+            return errorHandling(outputNull);
         }
     }
 
@@ -350,7 +363,7 @@ int main(int argc, char *argv[])
                 else
                 {
                     tokens[num_lex] = skipsym; // Invalid identifier, so skip
-                    exit(errorHandling(skipsymPresent, fOut));
+                    return(errorHandling(skipsymPresent));
                 }
             }
 
@@ -410,7 +423,7 @@ int main(int argc, char *argv[])
             {
                 tokens[num_lex++] = skipsym;
                 printf("Error: Scanning error detected by lexer (skipsym present)\n");
-                exit(errorHandling(skipsymPresent, fOut));
+                return(errorHandling(skipsymPresent));
             }
             else if (counter < 6) // Valid number, so add token
             {
@@ -421,7 +434,7 @@ int main(int argc, char *argv[])
                 //printf("Number is too long\n");
                 tokens[num_lex++] = skipsym; // Invalid number, so skip
                 printf("Error: Scanning error detected by lexer (skipsym present)\n");
-                exit(errorHandling(skipsymPresent, fOut));
+                return(errorHandling(skipsymPresent));
             }
         }
 
@@ -608,7 +621,7 @@ int main(int argc, char *argv[])
 
     else
     {
-        exit(errorHandling(parseFlag, fOut));
+        return(errorHandling(parseFlag));
     }
 
     // --- Code Generator ---
@@ -618,14 +631,15 @@ int main(int argc, char *argv[])
     return 0;
 }
 
-/*  - called in exit eg. "exit(errorHandling(errorCode, outputFile));"
+/*  - called in return eg. "return errorHandling(errorCode, outputFile);"
       where "errorCode" is a value of enum errorCode and outputFile
       is the pointer to the output file (currently fOut)
     - Catches an errorcode thrown by other functions. 
     - Builds a message to print to stdout and elf.txt
     - Prints message and returns errorCode
+    - Allows main() to return with errorCode
 */
-int errorHandling (int errorCode, FILE* fOut)
+int errorHandling (int errorCode)
 {
     //Variable declaration
     char errorMessage [550] = "\n --- ERROR: ";
@@ -636,9 +650,135 @@ int errorHandling (int errorCode, FILE* fOut)
     //Error detailing
     switch (errorCode)
     {
-        case fileNull:
+        case noError:
         {
-            strcat(errorMessage, "file read error");
+            strcat(errorMessage, "programme ran successfully");
+            break;
+        }
+        
+        case inputNull:
+        {
+            strcat(errorMessage, "input-file read error");
+            break;
+        }
+
+        case outputNull:
+        {
+            strcat(errorMessage, "ouput-file read error");
+            break;
+        }
+
+        case skipsymPresent:
+        {
+            strcat(errorMessage, "Scanning error detected by lexer (skipsym present)");
+            break;
+        }
+
+        case periodExpected:
+        {
+            strcat(errorMessage, "program must end with period");
+            break;
+        }
+
+        case identifierExpected:
+        {
+            strcat(errorMessage, "const, var, and read keywords must be followed by identifier");
+            break;
+        }
+        
+        case duplicateSymbolName:
+        {
+            strcat(errorMessage, "symbol name has already been declared");
+            break;
+        }
+
+        case constantAssignmentSymbolExpected:
+        {
+            strcat(errorMessage, "constants must be assigned with =");
+            break;
+        }
+
+        case numberExpected:
+        {
+            strcat(errorMessage, "constants must be assigned an integer value");
+            break;
+        }
+
+        case semicolonExpected:
+        {
+            strcat(errorMessage, "constant and variable declarations must be followed by a semicolon");
+            break;
+        }
+
+        case undeclaredIdentifier:
+        {
+            strcat(errorMessage, "undeclared identifier");
+            break;
+        }
+
+        case cannotAlterNonVariable:
+        {
+            strcat(errorMessage, "only variable values may be altered");
+            break;
+        }
+
+        case nonConstantIdentiferExpected:
+        {
+            strcat(errorMessage, "assignment statements must use :=");
+            break;
+        }
+
+        case endExpected:
+        {
+            strcat(errorMessage, "begin must be followed by end");
+            break;
+        }
+
+        case thenExpected:
+        {
+            strcat(errorMessage, "if must be followed by then");
+            break;
+        }
+
+        case doExpected:
+        {
+            strcat(errorMessage, "while must be followed by do");
+            break;
+        }
+
+        case odExpected:
+        {
+            strcat(errorMessage, "do must be followed by od");
+            break;
+        }
+
+        case fiExpected:
+        {
+            strcat(errorMessage, "if-then statement must end with fi");
+            break;
+        }
+
+        case comparatorExpected:
+        {
+            strcat(errorMessage, "condition must contain comparison operator");
+            break;
+        }
+
+        case rightParenthesisExpected:
+        {
+            strcat(errorMessage, "right parenthesis must follow left parenthesis");
+            break;
+        }
+
+        case arithmeticSymbolsExpected:
+        {
+            strcat(errorMessage, "arithmetic equations must contain operands, parentheses, numbers, or symbols");
+            break;
+        }
+
+        default:
+        {
+            strcat(errorMessage, "miscellaneous error");
             break;
         }
     }
@@ -650,7 +790,7 @@ int errorHandling (int errorCode, FILE* fOut)
     printf(errorMessage);
     fprintf(fOut, errorMessage);
 
-    //return errorCode to caller exit()
+    //return errorCode to caller return()
     return errorCode;
 }
 
