@@ -953,13 +953,98 @@ int block ()
 // <const-declaration> ::= [ "const" <ident> "=" <number> { "," <ident> "=" <number> } ";" ]
 int constDeclaration ()
 {
-    
+    // initializing for name and value of symbol
+    char identName[12];
+    int value = 0;
+
+    // if it is a constant
+    if(tokens[pCurr] == constsym)
+    {   
+        // do-while loop
+        do
+        {   
+            // error check for identifier
+            pCurr++;
+            if(tokens[pCurr] != identsym)
+            {
+                return identifierExpected;
+            }
+
+            // error check for duplicate symbol
+            if(symbolTableCheck(lexemes[pCurr]) != -1)
+            {
+                return duplicateSymbolName;
+            }
+            // getting name of symbol
+            strcpy(identName, lexemes[pCurr++]);
+
+            // error check for certain symbol
+            if(tokens[pCurr] != eqsym)
+            {
+                return constantAssignmentSymbolExpected;
+            }
+            pCurr++;
+
+            // error check for number
+            if(tokens[pCurr] != numbersym)
+            {
+                return numberExpected;
+            }
+            // getting number
+            value = atoi(lexemes[pCurr]);
+
+            // adding to symbol table
+            symbolTableAdd(1, identName, value, 0, 0);
+            pCurr++;
+        } while (tokens[pCurr] == commasym);
+        // loops if encounters a comma
+        
+        // error check for semicolon
+        if(tokens[pCurr] != semicolonsym)
+        {
+            return semicolonExpected;
+        }
+
+        // incrementing counter
+        pCurr++;
+    }
 }
 
 //<var-declaration> ::= [ "var" <ident> { "," <ident> } ";" ]
 int varDeclaration ()
 {
+    // checking if current token is a variable
+    int numVars = 0;
+    if(tokens[pCurr] == varsym)
+    {
+        do
+        {
+            // error check for identifier
+            pCurr++;
+            if(tokens[pCurr] != identsym)
+            {
+                return identifierExpected;
+            }
+            // error check for duplicate symbol
+            if(symbolTableCheck(lexemes[pCurr]) != -1)
+            {
+                return duplicateSymbolName;
+            }
+            // adding to symbol table
+            symbolTableAdd(2, lexemes[pCurr], 0, 0, numVars + 3);
+            numVars++;
+            pCurr++;
+        } while(tokens[pCurr] == commasym);
+        // looping again if encountering comma
 
+        // error check for semi colon
+        if(tokens[pCurr] != semicolonsym)
+        {
+            return semicolonExpected;
+        }
+        pCurr++;
+    }
+    return numVars;
 }
 
 /*
@@ -972,7 +1057,140 @@ int varDeclaration ()
 */
 int statement ()
 {
+    if(tokens[pCurr] == identsym)
+    {
+        int symIdx = symbolTableCheck(lexemes[pCurr]);
+        if(symIdx == -1)
+        {
+            return undeclaredIdentifier;
+        }
+        if(symbolTable[symIdx].kind != 2)
+        {
+            return cannotAlterNonVariable;
+        }
+        pCurr++;
+        
+        if(tokens[pCurr] != becomessym)
+        {
+            return nonConstantIdentiferExpected;
+        }
+        pCurr++;
 
+        int retval = expression();
+        if(retval != 0)
+        {
+            return retval;
+        }
+
+        emit(STO, 0, symbolTable[symIdx].addr);
+        return 0;
+    }
+
+    if(tokens[pCurr] == beginsym)
+    {
+        do
+        {
+            pCurr++;
+            int retval = statement();
+            if(retval != 0)
+            {
+                return retval;
+            }
+        } while(tokens[pCurr] == semicolonsym);
+
+        if(tokens[pCurr] != endsym)
+        {
+            return endExpected;
+        }
+
+        pCurr++;
+        return 0;
+    }
+
+    if(tokens[pCurr] == ifsym)
+    {
+        pCurr++;
+        condition();
+
+        int jpcIdx = cx;
+        emit(JPC, 0, 0);
+
+        if(tokens[pCurr] != thensym)
+        {
+            return thenExpected;
+        }
+        pCurr++;
+        int retval = statement();
+        if(retval != 0)
+        {
+            return retval;
+        }
+
+        code[jpcIdx].M = cx;
+        return 0;
+    }
+
+    if(tokens[pCurr] == whilesym)
+    {
+        pCurr++;
+        int loopIdx = cx;
+        condition();
+        if(tokens[pCurr] != dosym)
+        {
+            return doExpected;
+        }
+
+        pCurr++;
+        int jpcIdx = cx;
+        emit(JPC, 0, 0);
+        int retval = statement();
+        if(retval != 0)
+        {
+            return retval;
+        }
+
+        emit(JMP, 0, loopIdx);
+        code[jpcIdx].M = cx;
+        return 0;
+    }
+
+    if(tokens[pCurr] == readsym)
+    {
+        pCurr++;
+        if(tokens[pCurr] != identsym)
+        {
+            return identifierExpected;
+        }
+
+        int symIdx = symbolTableCheck(lexemes[pCurr]);
+        if(symIdx == -1)
+        {
+            return undeclaredIdentifier;
+        }
+
+        if(symbolTable[symIdx].kind != 2)
+        {
+            return cannotAlterNonVariable;
+        }
+        pCurr++;
+
+        emit(SYS, 0, 1);
+        emit(STO, 0, symbolTable[symIdx].addr);
+        return 0;
+    }
+
+    if(tokens[pCurr] == writesym)
+    {
+        pCurr++;
+        int retval = expression();
+        if(retval != 0)
+        {
+            return retval;
+        }
+
+        emit(SYS, 0, 2);
+        return 0;
+    }
 }
 
 // <condition> ::= <expression> <rel-op> <expression>
