@@ -105,13 +105,14 @@ typedef enum
 } errorCode;
 
 // Global Variables
-FILE *file = NULL;      // Points to PL/0 source file
+FILE *fIn = NULL;      // Points to PL/0 source file
 FILE *fOut = NULL; // Output file with machine code and/ or error message
 char lexemes[550][550]; // Array of lexemes
 char names [550][550];  // Array of names
 int tokens[550];        // Array of tokens
 int num_lex = 0;        // Number of lexemes/ tokens scanned
 int num_names = 0;      // Number of names scanned
+int pCurr = 0;          // Index of current token being parsed
 
 // Function prototypes
 int streq (char stringA [], char stringB []); // String equal? 1 : 0
@@ -122,7 +123,6 @@ int main(int argc, char *argv[])
     // Variable declaration and initialisation
     int character = 0;      // Used to parse file 
     int parseFlag = 0;      // Signals if there is an error during parsing
-    int pCurr = 0;          // Index of current token being parsed
 
     // --- Validate inputs and output ---
     // Print all command-line arguments
@@ -137,9 +137,9 @@ int main(int argc, char *argv[])
     if (argc == 2)  // Ensure only one input is given and is accessible
     {
         // Opening file for input
-        file = fopen(argv[1], "r");
+        fIn = fopen(argv[1], "r");
         fOut = fopen("elf.txt", "w");
-        if (file == NULL)
+        if (fIn == NULL)
         {
             printf("Input file could not be opened\n");
             return errorHandling(inputNull);
@@ -179,7 +179,7 @@ int main(int argc, char *argv[])
             - If lexeme is a number, ensures it is valid then stores.
             - If lexeme is a special symbol, stores.  
     */
-    while((character = fgetc(file)) != EOF )
+    while((character = fgetc(fIn)) != EOF )
     {
         // Skipping if encountering invisible characters
         if(isspace(character))
@@ -190,7 +190,7 @@ int main(int argc, char *argv[])
         // Skipping if encountering multi-line comments
         else if(character == '/')
         {
-            int temp  = fgetc(file);
+            int temp  = fgetc(fIn);
             int breakLoop = 1; // Flag
 
             if(temp == '*')
@@ -198,7 +198,7 @@ int main(int argc, char *argv[])
                 // Parsing through whole comment
                 while(breakLoop == 1)
                 {
-                    character = fgetc(file);
+                    character = fgetc(fIn);
 
                     // Error catching if comment goes until EOF
                     if(character == EOF)
@@ -211,7 +211,7 @@ int main(int argc, char *argv[])
                     // Checking as might be end of multi-line comment
                     else if(character == '*')
                     {
-                        temp = fgetc(file);
+                        temp = fgetc(fIn);
                         if(temp == '/')
                         {
                             breakLoop = 0;
@@ -220,7 +220,7 @@ int main(int argc, char *argv[])
 
                         else
                         {
-                            ungetc(temp, file);
+                            ungetc(temp, fIn);
                         }
                     }
 
@@ -233,7 +233,7 @@ int main(int argc, char *argv[])
             // Going back if not multi-line comment and just a slash
             else
             {
-                ungetc(temp, file);
+                ungetc(temp, fIn);
                 lexemes[num_lex][0] = '/';
                 lexemes[num_lex][1] = '\0';
                 tokens[num_lex++] = slashsym;
@@ -248,7 +248,7 @@ int main(int argc, char *argv[])
             lexemes[num_lex][counter++] = character;
 
             // Getting next character and checking if it is letter/number
-            int temp = fgetc(file);
+            int temp = fgetc(fIn);
             while(temp != EOF && isalnum(temp))
             {
                 // Inputting character into string and getting next character
@@ -256,7 +256,7 @@ int main(int argc, char *argv[])
                 {
                   lexemes[num_lex][counter++] = temp;
                 }
-                temp = fgetc(file);
+                temp = fgetc(fIn);
             }
             
             // Adding null char (terminator) to end
@@ -265,7 +265,7 @@ int main(int argc, char *argv[])
             // If was not letter/number, ungetting character
             if(temp != EOF)
             {
-                ungetc(temp, file);
+                ungetc(temp, fIn);
             }
 
             // Checking if lexeme is a reserved word
@@ -379,7 +379,7 @@ int main(int argc, char *argv[])
             lexemes[num_lex][counter++] = character;
 
             // Getting next character and checking if it is a number
-            int temp = fgetc(file);
+            int temp = fgetc(fIn);
 
             while(temp != EOF && isdigit(temp))
             {
@@ -387,7 +387,7 @@ int main(int argc, char *argv[])
               {
                 lexemes[num_lex][counter++] = temp;
               }
-              temp = fgetc(file);
+              temp = fgetc(fIn);
             }
 
             // has letter flag
@@ -405,14 +405,14 @@ int main(int argc, char *argv[])
                 {
                   lexemes[num_lex][counter++] = temp;
                 }
-                temp = fgetc(file);
+                temp = fgetc(fIn);
               }
             }
 
             // Ungetting temp if it was another symbol after number
             if(temp != EOF)
             {
-                ungetc(temp, file);
+                ungetc(temp, fIn);
             }
             
             // Adding null terminator to number and putting token in if valid
@@ -505,7 +505,7 @@ int main(int argc, char *argv[])
         // If encounters '<', using if and else statement to determine which special symbol
         else if(character == '<')
         {
-            int temp = fgetc(file);
+            int temp = fgetc(fIn);
 
             if(temp == '>')
             {
@@ -525,7 +525,7 @@ int main(int argc, char *argv[])
 
             else 
             {
-                ungetc(temp, file);
+                ungetc(temp, fIn);
                 lexemes[num_lex][0] = character;
                 lexemes[num_lex][1] = '\0';
                 tokens[num_lex++] = lessym; 
@@ -535,7 +535,7 @@ int main(int argc, char *argv[])
         // If encounters '>', using if and else statement to determine which special symbol
         else if(character == '>')
         {
-            int temp = fgetc(file);
+            int temp = fgetc(fIn);
 
             if(temp == '=')
             {
@@ -547,7 +547,7 @@ int main(int argc, char *argv[])
 
             else 
             {
-                ungetc(temp, file);
+                ungetc(temp, fIn);
                 lexemes[num_lex][0] = character;
                 lexemes[num_lex][1] = '\0';
                 tokens[num_lex++] = gtrsym;
@@ -557,7 +557,7 @@ int main(int argc, char *argv[])
         // If encounters ':', using if and else statement to determine if it is becomessym
         else if(character == ':')
         {
-            int temp = fgetc(file);
+            int temp = fgetc(fIn);
 
             if(temp == '=')
             {
@@ -570,7 +570,7 @@ int main(int argc, char *argv[])
             else 
             {
                 //printf("Invalid symbol (no token representation)\n");
-                ungetc(temp, file);
+                ungetc(temp, fIn);
             }
         }
 
@@ -627,8 +627,11 @@ int main(int argc, char *argv[])
     // --- Code Generator ---
     // Generates PM/0 assembly code
     // to be implemented
-    
-    return 0;
+
+    // --- Clean up and return ---
+    fclose(fIn);
+    fclose(fOut);
+    return errorHandling(noError);
 }
 
 /*  - called in return eg. "return errorHandling(errorCode, outputFile);"
@@ -778,7 +781,7 @@ int errorHandling (int errorCode)
 
         default:
         {
-            strcat(errorMessage, "miscellaneous error");
+            strcat(errorMessage, "miscellaneour error");
             break;
         }
     }
@@ -823,74 +826,131 @@ int nameExists (char name [], char names[][550], int num_names) // Name present?
 }
 
 // --- Parser helper function definitions ---
+
+//emit
+void emit (int op, int l, int m)
+{
+    fprintf(fOut, "%d %d %d\n", op, l, m);
+}
+
+//<program> ::= <block> "."
 int program ()
 {
+    int retval = block(); // Return value of program, default to 0 (no error)
+    if (retval == 0) // If block is successfully parsed
+    {
+        if (tokens[pCurr] != periodsym) // Check for periodsym at end of program
+        {
+            retval = periodExpected; // Error: program must end with period
+        }
+    }
 
+    pCurr++; //increment iterator
+
+    emit(9,0,3); // HALT
+
+    return retval;  
 }
 
+//<block> ::= <const-declaration> <var-declaration> <statement>
 int block ()
 {
+    int retval = constDeclaration();
+    if (retval == 0) // If const-declaration is successfully parsed
+    {
+        retval = varDeclaration();
+        if (retval == 0) // If var-declaration is successfully parsed
+        {
+            retval = statement();
+        }
+    }
 
+    else
+    {
+        retval = miscError;
+    }
+    
+    pCurr++; //increment iterator
+    return retval;
 }
 
+// <const-declaration> ::= [ "const" <ident> "=" <number> { "," <ident> "=" <number> } ";" ]
 int constDeclaration ()
 {
-
+    
 }
 
+//<var-declaration> ::= [ "var" <ident> { "," <ident> } ";" ]
 int varDeclaration ()
 {
 
 }
 
+/*
+<statement> ::= [ <ident> ":=" <expression>
+                | "begin" <statement> { ";" <statement> } "end"
+                | "if" <condition> "then" <statement> [ "else" <statement> ] "fi"
+                | "while" <condition> "do" <statement> "od"
+                | "read" <ident>
+                | "write" <expression> ]
+*/
 int statement ()
 {
 
 }
 
+// <condition> ::= <expression> <rel-op> <expression>
 int condition ()
 {
 
 }
 
+// <expression> ::= ["-"] <term> { ("+" | "-") <term> }
 int expression ()
 {
 
 }
 
+// <term> ::= <factor> { ("*" | "/" ) <factor> }
 int term ()
 {
 
 }
 
+// <factor> ::= <ident> | <number> | "(" <expression> ")"
 int factor ()
 {
 
 }
 
+// <number> ::= <digit> { <digit> }
 int number ()
 {
 
 }
 
+// <ident> ::= <letter> { <letter> | <digit> }
 int identifier ()
 {
 
 }
 
+// <rel-op> ::= "=" | "<>" | "<" | "<=" | ">" | ">="
 int relOp ()
 {
 
 }
 
+// <digit> ::= "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9"
 int digit ()
 {
 
 }
 
+// <letter> ::= "a" | "b" | ... | "z" | "A" | "B" | ... | "Z"
 int letter ()
 {
-
+    
 }
 
 // --- Code Generator helper function definitions ---
