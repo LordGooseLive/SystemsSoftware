@@ -107,6 +107,20 @@ typedef enum
     
 } errorCode;
 
+typedef enum 
+{
+    LIT = 1,    // push literal
+    OPR,        // operation code
+    LOD,        // load to stack
+    STO,        // store from stack
+    CAL,        // call procedure
+    INC,        // allocate locals
+    JMP,        // unconditional jump
+    JPC,        // conditional jump
+    SYS         // system instruction
+
+} opCode;
+
 typedef struct symbol
 {
     int kind; // const = 1, var = 2, proc = 3
@@ -141,8 +155,8 @@ int cx = 0; // Index of current instruction for code gen
 // Function prototypes
 int streq (char stringA [], char stringB []); // String equal? 1 : 0
 int nameExists (char name [], char names[][500], int num_names); // Name present? 1 : 0
-int errorHandling (int errorCode); // Catches error code and prints message
-int symbolTableCheck (char name[]); // Checks if symbol is in symbol table and returns index
+void errorHandling (int errorCode); // Catches error code and prints message
+int symTableCheck (char name[]); // Checks if symbol is in symbol table and returns index
 int emit (int op, int l, int m); // Emits instruction for code gen
 
 
@@ -170,13 +184,13 @@ int main(int argc, char *argv[])
         if (fIn == NULL)
         {
             printf("Input file could not be opened\n");
-            return errorHandling(inputNull);
+            errorHandling(inputNull);
         }
 
         else if (fOut == NULL)
         {
             printf("Output file could not be opened\n");
-            return errorHandling(outputNull);
+            errorHandling(outputNull);
         }
     }
 
@@ -391,7 +405,7 @@ int main(int argc, char *argv[])
                 else
                 {
                     tokens[num_lex] = skipsym; // Invalid identifier, so skip
-                    return(errorHandling(skipsymPresent));
+                    errorHandling(skipsymPresent);
                 }
             }
 
@@ -455,7 +469,7 @@ int main(int argc, char *argv[])
                 //printf("Number is too long\n");
                 tokens[num_lex++] = skipsym; // Invalid number, so skip
                 printf("Error: Scanning error detected by lexer (skipsym present)\n");
-                return(errorHandling(skipsymPresent));
+                errorHandling(skipsymPresent);
             }
         }
 
@@ -648,7 +662,7 @@ int main(int argc, char *argv[])
 
     else
     {
-        return(errorHandling(parseFlag));
+        errorHandling(parseFlag);
     }
 
     // --- Code Generator ---
@@ -658,18 +672,15 @@ int main(int argc, char *argv[])
     // --- Clean up and return ---
     fclose(fIn);
     fclose(fOut);
-    return errorHandling(noError);
+    errorHandling(noError);
 }
 
-/*  - called in return eg. "return errorHandling(errorCode, outputFile);"
-      where "errorCode" is a value of enum errorCode and outputFile
-      is the pointer to the output file (currently fOut)
+/*
     - Catches an errorcode thrown by other functions. 
     - Builds a message to print to stdout and elf.txt
-    - Prints message and returns errorCode
-    - Allows main() to return with errorCode
+    - Prints message to stdout and elf.txt then exits with error code
 */
-int errorHandling (int errorCode)
+void errorHandling (int errorCode)
 {
     //Variable declaration
     char errorMessage [550] = "\n --- ERROR: ";
@@ -806,6 +817,12 @@ int errorHandling (int errorCode)
             break;
         }
 
+        case tooManyInstructions:
+        {
+            strcat(errorMessage, "too many instructions for code array");
+            break;
+        }
+
         default:
         {
             strcat(errorMessage, "miscellaneour error");
@@ -819,9 +836,8 @@ int errorHandling (int errorCode)
     //output to stdio and elf.txt
     printf(errorMessage);
     fprintf(fOut, errorMessage);
-
-    //return errorCode to caller return()
-    return errorCode;
+f
+    exit (errorCode);
 }
 
 // --- Lexical Analyser helper function definitions ---
@@ -853,7 +869,7 @@ int nameExists (char name [], char names[][500], int num_names) // Name present?
 }
 
 // --- Symbol table helper function ---
-int symbolTableCheck (char name[])
+int symTableLookup (char name[]) //called SymbolTableChecker in documentation
 {
     for (int i = symCurr - 1; i > 0; i--)
     {
@@ -865,9 +881,9 @@ int symbolTableCheck (char name[])
     return -1; // Symbol not found
 }
 
-int symbolTableAdd (int kind, char name[], int val, int level, int addr)
+int symTableInsert (int kind, char name[], int val, int level, int addr)
 {
-    if (symCurr < MAX_SYMBOL_TABLE_SIZE)
+    if (symCurr < MAX_SYMBOL_TABLE_SIZE && symTableCheck(name) == -1) // Ensure there is space and name not already present
     {
         symbolTable[symCurr].kind = kind;
         strcpy(symbolTable[symCurr].name, name);
@@ -880,74 +896,47 @@ int symbolTableAdd (int kind, char name[], int val, int level, int addr)
     }
     else
     {
-        return errorHandling(miscError); // add to error enum
+        errorHandling(miscError); // add to error enum
     }
 }
 
+int symTableMark (char name [])
+{
+    if (symTableLookup(name) != -1)
+    {
+        symbolTable[symTableLookup(name)].mark = 1; // Mark  as not in use
+        return 0; // Success
+    }
+    else
+    {
+        errorHandling(miscError); // add to error enum
+    }
+}
 
 // --- Parser helper function definitions ---
 
-//emit
-int emit (int op, int l, int m)
-{
-    printf(fOut, "%d %d %d\n", op, l, m); // Debugging 
-
-    int retval = 0; // Return value, default to 0 (no error)
-
-    if (cx < 500)
-    {
-        code[cx].op = op;
-        code[cx].l = l;
-        code[cx].m = m;
-        cx++;
-    }
-
-    else
-    {
-        retval = errorHandling(tooManyInstructions); // Error: too many instructions
-    }
-    return retval;
-}
-
 //<program> ::= <block> "."
-int program ()
+void program ()
 {
-    int retval = block(); // Return value of program, default to 0 (no error)
-    if (retval == 0) // If block is successfully parsed
+    block(); // Return value of program, default to 0 (no error)
+    
+    if (tokens[pCurr] != periodsym) // Check for periodsym at end of program
     {
-        if (tokens[pCurr] != periodsym) // Check for periodsym at end of program
-        {
-            retval = periodExpected; // Error: program must end with period
-        }
+        errorHandling(periodExpected); // Error: program must end with period
     }
 
     pCurr++; //increment iterator
 
     emit(9,0,3); // HALT
-
-    return retval;  
 }
 
 //<block> ::= <const-declaration> <var-declaration> <statement>
-int block ()
+void block ()
 {
-    int retval = constDeclaration();
-    if (retval == 0) // If const-declaration is successfully parsed
-    {
-        retval = varDeclaration();
-        if (retval == 0) // If var-declaration is successfully parsed
-        {
-            retval = statement();
-        }
-    }
-
-    else
-    {
-        retval = miscError;
-    }
-    
-    pCurr++; //increment iterator
-    return retval;
+    constDeclaration();
+    int numVars = varDeclaration();
+    emit (INC, 0, numVars + 3);
+    statement();
 }
 
 // <const-declaration> ::= [ "const" <ident> "=" <number> { "," <ident> "=" <number> } ";" ]
@@ -1030,3 +1019,22 @@ int letter ()
 }
 
 // --- Code Generator helper function definitions ---
+
+int emit (int op, int l, int m)
+{
+    printf(fOut, "%d %d %d\n", op, l, m); // Debugging 
+
+
+    if (cx < 500)
+    {
+        code[cx].op = op;
+        code[cx].l = l;
+        code[cx].m = m;
+        cx++;
+    }
+
+    else
+    {
+        errorHandling(tooManyInstructions); // Error: too many instructions
+    }
+}
