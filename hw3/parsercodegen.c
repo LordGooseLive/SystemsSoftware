@@ -1240,7 +1240,7 @@ int condition ()
         }
 
         // emitting EQL
-        emit(2, 0, 8)
+        emit(2, 0, 8);
     }
     // encounter not equal
     else if(tokens[pCurr] == neqsym)
@@ -1254,7 +1254,7 @@ int condition ()
         }
 
         // emitting NEQ
-        emit(2, 0, 9)
+        emit(2, 0, 9);
     }
 
     // encountering less than
@@ -1269,7 +1269,7 @@ int condition ()
         }
 
         // emitting LSS
-        emit(2, 0, 10)
+        emit(2, 0, 10);
     }
 
     // encounter less than or equal
@@ -1284,7 +1284,7 @@ int condition ()
         }
 
         // emitting LEQ
-        emit(2, 0, 11)
+        emit(2, 0, 11);
     }
 
     //  encounter greater than
@@ -1299,7 +1299,7 @@ int condition ()
         }
 
         // emitting GTR
-        emit(2, 0, 12)
+        emit(2, 0, 12);
     }
 
     // encounter greater than or equal
@@ -1314,7 +1314,7 @@ int condition ()
         }
 
         // emitting GEQ
-        emit(2, 0, 13)
+        emit(2, 0, 13);
     }
     // error check for comparator expected
     else
@@ -1427,14 +1427,14 @@ int factor ()
         if(symbolTable[symIdx].kind == 1)
         {
             // emitting LIT
-            emit(1, 0, symbolTable[symIdx].value)
+            emit(1, 0, symbolTable[symIdx].value);
         }
 
         // if identifier is var
         else
         {
             // emitting LOD 
-            emit(3, 0, symbolTable[symIdx].addr)
+            emit(3, 0, symbolTable[symIdx].addr);
         }
         pCurr++;
     }
