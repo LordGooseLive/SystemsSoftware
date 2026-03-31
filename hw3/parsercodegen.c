@@ -35,6 +35,7 @@ Due Date: See Webcourses for the posted due date and time.
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#define MAX_SYMBOL_TABLE_SIZE 500
 
 typedef enum
 {
@@ -104,6 +105,17 @@ typedef enum
     // Code generation errors:
 } errorCode;
 
+typedef struct symbol
+{
+    int kind; // const = 1, var = 2, proc = 3
+    char name[12]; // name up to 11 chars long
+    int val; // number (ASCII value)
+    int level; // L level
+    int addr; // M address
+    int mark; // 0 = in use, 1 = not in use (deleted)
+} symbol;
+
+
 // Global Variables
 FILE *fIn = NULL;      // Points to PL/0 source file
 FILE *fOut = NULL; // Output file with machine code and/ or error message
@@ -113,6 +125,7 @@ int tokens[550];        // Array of tokens
 int num_lex = 0;        // Number of lexemes/ tokens scanned
 int num_names = 0;      // Number of names scanned
 int pCurr = 0;          // Index of current token being parsed
+symbol symbol_table[MAX_SYMBOL_TABLE_SIZE];
 
 // Function prototypes
 int streq (char stringA [], char stringB []); // String equal? 1 : 0
