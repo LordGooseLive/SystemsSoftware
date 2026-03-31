@@ -100,9 +100,11 @@ typedef enum
     fiExpected, // if-then statement must end with fi
     comparatorExpected, // condition must contain comparison operator
     rightParenthesisExpected, // right parenthesis must follow left parenthesis
-    arithmeticSymbolsExpected // arithmetic equations must contain operands, parentheses, numbers, or symbols
+    arithmeticSymbolsExpected, // arithmetic equations must contain operands, parentheses, numbers, or symbols
+    tooManyInstructions // too many instructions for code array
 
     // Code generation errors:
+    
 } errorCode;
 
 typedef struct symbol
@@ -115,21 +117,34 @@ typedef struct symbol
     int mark; // 0 = in use, 1 = not in use (deleted)
 } symbol;
 
+typedef struct instruction
+{
+    int op; // opcode
+    int l; // L
+    int m; // M
+} instruction;
 
 // Global Variables
 FILE *fIn = NULL;      // Points to PL/0 source file
 FILE *fOut = NULL; // Output file with machine code and/ or error message
-char lexemes[550][550]; // Array of lexemes
-char names [550][550];  // Array of names
-int tokens[550];        // Array of tokens
+char lexemes[500][500]; // Array of lexemes
+char names [500][500];  // Array of names
+int tokens[500];        // Array of tokens
 int num_lex = 0;        // Number of lexemes/ tokens scanned
 int num_names = 0;      // Number of names scanned
 int pCurr = 0;          // Index of current token being parsed
-symbol symbol_table[MAX_SYMBOL_TABLE_SIZE];
+symbol symbolTable[MAX_SYMBOL_TABLE_SIZE];
+int symCurr = 0; // Index of current symbol in symbol table
+instruction code[500]; // Array of instructions for code gen
+int cx = 0; // Index of current instruction for code gen
 
 // Function prototypes
 int streq (char stringA [], char stringB []); // String equal? 1 : 0
-int nameExists (char name [], char names[][550], int num_names); // Name present? 1 : 0
+int nameExists (char name [], char names[][500], int num_names); // Name present? 1 : 0
+int errorHandling (int errorCode); // Catches error code and prints message
+int symbolTableCheck (char name[]); // Checks if symbol is in symbol table and returns index
+int emit (int op, int l, int m); // Emits instruction for code gen
+
 
 int main(int argc, char *argv[])
 {
@@ -822,7 +837,7 @@ int streq (char stringA [], char stringB []) // String equal? 1 : 0
 }
 
 // Checks if the name is already in name table.  Returns true or false
-int nameExists (char name [], char names[][550], int num_names) // Name present? 1 : 0
+int nameExists (char name [], char names[][500], int num_names) // Name present? 1 : 0
 {
     int retval = 0; // False by default
 
@@ -837,12 +852,61 @@ int nameExists (char name [], char names[][550], int num_names) // Name present?
     return retval;
 }
 
+// --- Symbol table helper function ---
+int symbolTableCheck (char name[])
+{
+    for (int i = symCurr - 1; i > 0; i--)
+    {
+        if (streq(name, symbolTable[i].name) && symbolTable[i].mark == 0)
+        {
+            return i; // Return index of symbol in symbol table
+        }
+    }
+    return -1; // Symbol not found
+}
+
+int symbolTableAdd (int kind, char name[], int val, int level, int addr)
+{
+    if (symCurr < MAX_SYMBOL_TABLE_SIZE)
+    {
+        symbolTable[symCurr].kind = kind;
+        strcpy(symbolTable[symCurr].name, name);
+        symbolTable[symCurr].val = val;
+        symbolTable[symCurr].level = level;
+        symbolTable[symCurr].addr = addr;
+        symbolTable[symCurr].mark = 0; // Mark as in use
+        symCurr++;
+        return 0; // Success
+    }
+    else
+    {
+        return errorHandling(miscError); // add to error enum
+    }
+}
+
+
 // --- Parser helper function definitions ---
 
 //emit
-void emit (int op, int l, int m)
+int emit (int op, int l, int m)
 {
-    fprintf(fOut, "%d %d %d\n", op, l, m);
+    printf(fOut, "%d %d %d\n", op, l, m); // Debugging 
+
+    int retval = 0; // Return value, default to 0 (no error)
+
+    if (cx < 500)
+    {
+        code[cx].op = op;
+        code[cx].l = l;
+        code[cx].m = m;
+        cx++;
+    }
+
+    else
+    {
+        retval = errorHandling(tooManyInstructions); // Error: too many instructions
+    }
+    return retval;
 }
 
 //<program> ::= <block> "."
