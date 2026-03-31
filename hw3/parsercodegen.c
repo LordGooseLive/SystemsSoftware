@@ -390,25 +390,6 @@ int main(int argc, char *argv[])
               temp = fgetc(file);
             }
 
-            // has letter flag
-            int hasLetter = 0;
-
-            // Error if letter is next to digit
-            if(isalpha(temp))
-            {
-              // error as there is letter next to number
-              hasLetter = 1;
-
-              while(temp != EOF && isalnum(temp))
-              {
-                if(counter < 99)
-                {
-                  lexemes[num_lex][counter++] = temp;
-                }
-                temp = fgetc(file);
-              }
-            }
-
             // Ungetting temp if it was another symbol after number
             if(temp != EOF)
             {
@@ -418,14 +399,7 @@ int main(int argc, char *argv[])
             // Adding null terminator to number and putting token in if valid
             lexemes[num_lex][counter] = '\0';
 
-            // skipsym if number has letters
-            if(hasLetter == 1)
-            {
-                tokens[num_lex++] = skipsym;
-                printf("Error: Scanning error detected by lexer (skipsym present)\n");
-                return(errorHandling(skipsymPresent));
-            }
-            else if (counter < 6) // Valid number, so add token
+            if (counter < 6) // Valid number, so add token
             {
                 tokens[num_lex++] = numbersym;
             }
@@ -577,6 +551,12 @@ int main(int argc, char *argv[])
         // Else statement to catch any outliers
         else
         {
+            // saving invalid symbols as a lexeme and adding it as a token for parser
+            lexemes[num_lex][0] = character;
+            lexemes[num_lex][1] = '\0';
+            tokens[num_lex++] = skipsym;
+
+            //  printing error statement
             printf("Invalid character scanned");
         }
     }
