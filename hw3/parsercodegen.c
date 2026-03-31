@@ -935,7 +935,7 @@ void block ()
 {
     constDeclaration();
     int numVars = varDeclaration();
-    emit (INC, 0, numVars + 3);
+    emit (6, 0, numVars + 3);
     statement();
 }
 
@@ -1046,40 +1046,51 @@ int varDeclaration ()
 */
 int statement ()
 {
+    // checking if is identifier
     if(tokens[pCurr] == identsym)
-    {
+    {   
+        // storing index of identifier
         int symIdx = symbolTableCheck(lexemes[pCurr]);
+
+        // error check for undeclared identifier
         if(symIdx == -1)
         {
             return undeclaredIdentifier;
         }
+        // error check for non-variable
         if(symbolTable[symIdx].kind != 2)
         {
             return cannotAlterNonVariable;
         }
         pCurr++;
         
+        // error check for nonconstant identifier
         if(tokens[pCurr] != becomessym)
         {
             return nonConstantIdentiferExpected;
         }
         pCurr++;
 
+        // parsing and generating code from expression
         int retval = expression();
         if(retval != 0)
         {
             return retval;
         }
 
+        // emitting STO
         emit(STO, 0, symbolTable[symIdx].addr);
         return 0;
     }
 
+    // checking if were at a beginning
     if(tokens[pCurr] == beginsym)
-    {
+    {   
+        // loop at least once, continue while current token is semi-colon
         do
         {
             pCurr++;
+            // parsing and generating code from statement
             int retval = statement();
             if(retval != 0)
             {
@@ -1087,6 +1098,7 @@ int statement ()
             }
         } while(tokens[pCurr] == semicolonsym);
 
+        // check if token is an ending, error if not
         if(tokens[pCurr] != endsym)
         {
             return endExpected;
@@ -1096,19 +1108,25 @@ int statement ()
         return 0;
     }
 
+    // checking if current token is an if
     if(tokens[pCurr] == ifsym)
     {
+        // incrementing and parsing and generating code for condition
         pCurr++;
         condition();
 
+        // emitting JPC instruction 
         int jpcIdx = cx;
-        emit(JPC, 0, 0);
+        emit(8, 0, 0);
 
+        // error if does not encounter then
         if(tokens[pCurr] != thensym)
         {
             return thenExpected;
         }
         pCurr++;
+
+        // parsing statement and generating code, then filling in the jump address
         int retval = statement();
         if(retval != 0)
         {
@@ -1119,57 +1137,74 @@ int statement ()
         return 0;
     }
 
+    // checking if encounter while
     if(tokens[pCurr] == whilesym)
-    {
+    {   
+        // incrementing token and saving current index as start of loop
         pCurr++;
         int loopIdx = cx;
+
+        // parsing and generating condition and error check for do
         condition();
         if(tokens[pCurr] != dosym)
         {
             return doExpected;
         }
 
+        // incrementing token 
         pCurr++;
+
+        // saving current index, and emitting JPC
         int jpcIdx = cx;
         emit(JPC, 0, 0);
+
+        // parsing statement and generating code
         int retval = statement();
         if(retval != 0)
         {
             return retval;
         }
 
+        // emitting JMP and updating JPC instruction
         emit(JMP, 0, loopIdx);
         code[jpcIdx].M = cx;
         return 0;
     }
 
+    // encountering read
     if(tokens[pCurr] == readsym)
-    {
+    {   
+        // incrementing token and error check for identifier
         pCurr++;
         if(tokens[pCurr] != identsym)
         {
             return identifierExpected;
         }
 
+        // getting index for identifier and error check if undeclared
         int symIdx = symbolTableCheck(lexemes[pCurr]);
         if(symIdx == -1)
         {
             return undeclaredIdentifier;
         }
 
+        // error check for unalterable variable
         if(symbolTable[symIdx].kind != 2)
         {
             return cannotAlterNonVariable;
         }
         pCurr++;
 
-        emit(SYS, 0, 1);
-        emit(STO, 0, symbolTable[symIdx].addr);
+        // emitting SYS and STO
+        emit(9, 0, 1);
+        emit(4, 0, symbolTable[symIdx].addr);
         return 0;
     }
 
+    // encountering write
     if(tokens[pCurr] == writesym)
     {
+        // incrementing token and parsing and generating code from expression
         pCurr++;
         int retval = expression();
         if(retval != 0)
@@ -1177,63 +1212,264 @@ int statement ()
             return retval;
         }
 
-        emit(SYS, 0, 2);
+        // emitting SYS
+        emit(9, 0, 2);
         return 0;
     }
 }
 
 // <condition> ::= <expression> <rel-op> <expression>
 int condition ()
-{
+{   
+    // parsing and generating code from expression
+    int retval = expression();
+    if(retval != 0)
+    {
+        return retval;
+    }
+
+    // encountering equal
+    if(tokens[pCurr] == eqsym)
+    {   
+        // incrementing token and parsing and generating code from expression
+        pCurr++;
+        int retval = expression();
+        if(retval != 0)
+        {
+            return retval;
+        }
+
+        // emitting EQL
+        emit(2, 0, 8)
+    }
+    // encounter not equal
+    else if(tokens[pCurr] == neqsym)
+    {
+        // incrementing token and parsing and generating code from expression
+        pCurr++;
+        int retval = expression();
+        if(retval != 0)
+        {
+            return retval;
+        }
+
+        // emitting NEQ
+        emit(2, 0, 9)
+    }
+
+    // encountering less than
+    else if(tokens[pCurr] == lessymsym)
+    {
+        // incrementing token and parsing and generating code from expression
+        pCurr++;
+        int retval = expression();
+        if(retval != 0)
+        {
+            return retval;
+        }
+
+        // emitting LSS
+        emit(2, 0, 10)
+    }
+
+    // encounter less than or equal
+    else if(tokens[pCurr] == leqsym)
+    {
+        // incrementing token and parsing and generating code from expression
+        pCurr++;
+        int retval = expression();
+        if(retval != 0)
+        {
+            return retval;
+        }
+
+        // emitting LEQ
+        emit(2, 0, 11)
+    }
+
+    //  encounter greater than
+    else if(tokens[pCurr] == gtrsym)
+    {
+        // incrementing token and parsing and generating code from expression
+        pCurr++;
+        int retval = expression();
+        if(retval != 0)
+        {
+            return retval;
+        }
+
+        // emitting GTR
+        emit(2, 0, 12)
+    }
+
+    // encounter greater than or equal
+    else if(tokens[pCurr] == geqsym)
+    {
+        // incrementing token and parsing and generating code from expression
+        pCurr++;
+        int retval = expression();
+        if(retval != 0)
+        {
+            return retval;
+        }
+
+        // emitting GEQ
+        emit(2, 0, 13)
+    }
+    // error check for comparator expected
+    else
+    {
+        return comparatorExpected;
+    }
 
 }
 
 // <expression> ::= ["-"] <term> { ("+" | "-") <term> }
 int expression ()
 {
+    // parsing and generating code for term
+    int retval = term();
+    if(retval != 0)
+    {
+        return retval;
+    }
+
+    // loop while current token is plus or sym
+    while(tokens[pCurr] == plussym || tokens[pCurr] == minussym)
+    {
+        // if plus
+        if(tokens[pCurr] == plussym)
+        {
+            // incrementing token and parsing and generating code for term
+            pCurr++;
+            int retval = term();
+            if(retval != 0)
+            {
+                return retval;
+            }
+
+            // emitting ADD
+            emit(2, 0, 2)
+        }
+        else
+        {   
+            // incrementing token and parsing and generate code for term
+            pCurr++;
+            int retval = term();
+            if(retval != 0)
+            {
+                return retval;
+            }
+
+            // emitting SUB
+            emit(2, 0, 3)
+        }
+    }
 
 }
 
 // <term> ::= <factor> { ("*" | "/" ) <factor> }
 int term ()
-{
+{   
+    // parsing and generating code for factor
+    int retval = factor();
+    if(retval != 0)
+    {
+        return retval;
+    }
 
+    // loop while current token is mult or div
+    while(tokens[pCurr] == multsym || tokens[pCurr] == slashsym)
+    {
+        // if mult
+        if(tokens[pCurr] == multsym)
+        {
+            // increment token and parse and generate code for factor
+            pCurr++;
+            int retval = factor();
+            if(retval != 0)
+            {
+                return retval;
+            }
+
+            // emitting MUL
+            emit(2, 0, 4)
+        }
+        else
+        {
+            // increment token and parse and generate code for factor
+            pCurr++;
+            int retval = factor();
+            if(retval != 0)
+            {
+                return retval;
+            }
+
+            // emitting DIV
+            emit(2, 0, 5)
+        }
+    }
 }
 
 // <factor> ::= <ident> | <number> | "(" <expression> ")"
 int factor ()
 {
+    // encounter identifier
+    if(tokens[pCurr] == identsym)
+    {   
+        // storing index of identifier
+        int symIdx = symbolTableCheck(lexemes[pCurr]);
+        if(symIdx == -1)
+        {
+            return undeclaredIdentifier;
+        }
+        // if identifier is a const
+        if(symbolTable[symIdx].kind == 1)
+        {
+            // emitting LIT
+            emit(1, 0, symbolTable[symIdx].value)
+        }
 
-}
+        // if identifier is var
+        else
+        {
+            // emitting LOD 
+            emit(3, 0, symbolTable[symIdx].addr)
+        }
+        pCurr++;
+    }
 
-// <number> ::= <digit> { <digit> }
-int number ()
-{
+    // encountering number
+    else if(tokens[pCurr] == numbersym)
+    {
+        // emitting LIT
+        emit(1, 0, atoi(lexemes[pCurr++]));
+    }
 
-}
+    // encountering left parenthesis
+    else if(tokens[pCurr] == lparentsym)
+    {
+        // incrementing token and parsing and generating code for expression
+        pCurr++;
+        int retval = expression();
+        if(retval != 0)
+        {
+            return retval;
+        }
 
-// <ident> ::= <letter> { <letter> | <digit> }
-int identifier ()
-{
+        // error check for right parenthesis expected
+        if(tokens[pCurr] != rparentsym)
+        {
+            return rightParenthesisExpected;
+        }
+        pCurr++;
+    }
 
-}
-
-// <rel-op> ::= "=" | "<>" | "<" | "<=" | ">" | ">="
-int relOp ()
-{
-
-}
-
-// <digit> ::= "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9"
-int digit ()
-{
-
-}
-
-// <letter> ::= "a" | "b" | ... | "z" | "A" | "B" | ... | "Z"
-int letter ()
-{
-    
+    // error check for arithmetic symbol expected
+    else
+    {
+        return arithmeticSymbolsExpected;
+    }
 }
 
 // --- Code Generator helper function definitions ---
