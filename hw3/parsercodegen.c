@@ -30,14 +30,14 @@ Instructor: Dr. Jie Lin
 Due Date: See Webcourses for the posted due date and time.
 */
 
-// includes, macros and enums
+// --- includes, macros, enums and structs ---
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
-#define MAX_SYMBOL_TABLE_SIZE 500
+#define MAX 500 // Max number of tokens, lexemes, names, symbols, and instructions
 
-typedef enum tokenType
+typedef enum tokenType      // Numeric representation of token types for scanner
 {
     skipsym = 1,  // Skip / ignore token
     identsym,     // Identifier
@@ -75,7 +75,7 @@ typedef enum tokenType
     becomessym    // :=
 } tokenType;
 
-typedef enum errorCode
+typedef enum errorCode      // Numeric representation of error codes for error handling
 {
     noError = 0,
     miscError, // general error 
@@ -83,7 +83,7 @@ typedef enum errorCode
     outputNull, //output file read error
     skipsymPresent, //lexical analysis error
 
-    // Parsing errors:
+    // Parsing and Code generation errors:
     periodExpected, // program must end with period
     identifierExpected, // const, var, and read keywords must be followed by identifier
     duplicateSymbolName, //symbol name has already been declared
@@ -92,7 +92,7 @@ typedef enum errorCode
     semicolonExpected, // constant and variable declarations must be followed by a semicolon
     undeclaredIdentifier, // undeclared identifier
     cannotAlterNonVariable, // only variable values may be altered
-    nonConstantIdentiferExpected, // assignment statements must use :=
+    nonConstantIdentifierSymbolExpected, // assignment statements must use :=
     endExpected, // begin must be followed by end
     thenExpected, // if must be followed by then
     doExpected, // while must be followed by do
@@ -101,13 +101,18 @@ typedef enum errorCode
     comparatorExpected, // condition must contain comparison operator
     rightParenthesisExpected, // right parenthesis must follow left parenthesis
     arithmeticSymbolsExpected, // arithmetic equations must contain operands, parentheses, numbers, or symbols
-    tooManyInstructions // too many instructions for code array
+    tooManyInstructions, // too many instructions for code array
 
-    // Code generation errors:
+    //to be supported
+    symTableInsertionFailed, //failed to insert symbol into symbol table
+    symTableMarkFailed, //failed to mark symbol as not in use in symbol table
+    symTableLookupFailed, //failed to find symbol in symbol table
+    nonConstantIdentifierExpected, // only non-constant identifiers can be assigned a value
+    
     
 } errorCode;
 
-typedef enum opCode
+typedef enum opCode         // Numeric representation of opcodes for code generation
 {
     LIT = 1,    // push literal
     OPR,        // operation code
@@ -121,44 +126,54 @@ typedef enum opCode
 
 } opCode;
 
-typedef struct symbol
+typedef struct symbol       // Struct for storing symbol information
 {
-    int kind; // const = 1, var = 2, proc = 3
-    char name[12]; // name up to 11 chars long
-    int val; // number (ASCII value)
-    int level; // L level
-    int addr; // M address
-    int mark; // 0 = in use, 1 = not in use (deleted)
+    int kind;       // const = 1, var = 2, proc = 3
+    char name[12];  // name up to 11 chars long
+    int val;        // number (ASCII value)
+    int level;      // L level
+    int addr;       // M address
+    int mark;       // 0 = in use, 1 = not in use (deleted)
 } symbol;
 
-typedef struct instruction
+typedef struct instruction  // Struct for storing instruction information
 {
     int op; // opcode
-    int l; // L
-    int m; // M
+    int l;  // L
+    int m;  // M
 } instruction;
 
-// Global Variables
-FILE *fIn = NULL;       // Points to PL/0 source file
-FILE *fOut = NULL;      // Output file with machine code and/ or error message
-char lexemes[500][500]; // Array of lexemes
-char names [500][500];  // Array of names
-int tokens[500];        // Array of tokens
+// --- Function prototypes ---
+void errorHandling (int errorCode);             // Catches error code and prints message
+int streq (char stringA [], char stringB []);   // String equal? 1 : 0
+int nameExists (char name [], char names[][MAX], int num_names);    // Name present? 1 : 0
+int symTableLookup (char name[]);               // Checks if symbol is in symbol table and returns index
+void symTableInsert (int kind, char name[], int val, int level, int addr);   // Inserts symbol into symbol table
+int symTableMark (char name []);                // Marks symbol as not in use in symbol table
+void program ();                                // Grammar rule for <program>
+void block ();                                  // Grammar rule for <block>
+void constDeclaration ();                       // Grammar rule for <const-declaration>
+int varDeclaration ();                          // Grammar rule for <var-declaration>
+void statement ();                              // Grammar rule for <statement>
+void condition ();                              // Grammar rule for <condition>
+void expression ();                             // Grammar rule for <expression>
+void term ();                                   // Grammar rule for <term>
+void factor ();                                 // Grammar rule for <factor>
+void emit (int op, int l, int m);               // Emits instruction for code gen
+
+// --- Global Variables ---
+int tokens[MAX];        // Array of tokens
 int num_lex = 0;        // Number of lexemes/ tokens scanned
 int num_names = 0;      // Number of names scanned
 int pCurr = 0;          // Index of current token being parsed
-symbol symbolTable[MAX_SYMBOL_TABLE_SIZE];
+int cx = 0;             // Index of current instruction for code gen
 int symCurr = 0;        // Index of current symbol in symbol table
-instruction code[500];  // Array of instructions for code gen
-int cx = 0; // Index of current instruction for code gen
-
-// Function prototypes
-int streq (char stringA [], char stringB []); // String equal? 1 : 0
-int nameExists (char name [], char names[][500], int num_names); // Name present? 1 : 0
-void errorHandling (int errorCode); // Catches error code and prints message
-int symTableCheck (char name[]); // Checks if symbol is in symbol table and returns index
-int emit (int op, int l, int m); // Emits instruction for code gen
-
+char lexemes[MAX][MAX]; // Array of lexemes
+char names [MAX][MAX];  // Array of names
+FILE *fIn = NULL;       // Points to PL/0 source file
+FILE *fOut = NULL;      // Output file with machine code and/ or error message
+instruction code[MAX];  // Array of instructions for code gen
+symbol symbolTable[MAX]; // Array of symbols for symbol table
 
 int main(int argc, char *argv[])
 {
@@ -667,6 +682,585 @@ int main(int argc, char *argv[])
     errorHandling(noError);
 }
 
+// --- Lexical Analyser helper function definitions ---
+
+// Checks if two strings are identical. Returns true or false
+int streq (char stringA [], char stringB []) // String equal? 1 : 0
+{
+    if (strcmp(stringA, stringB) == 0)
+        return 1; //true
+
+    else
+        return 0; //false
+}
+
+// Checks if the name is already in name table.  Returns true or false
+int nameExists (char name [], char names[][MAX], int num_names) // Name present? 1 : 0
+{
+    int retval = 0; // False by default
+
+    for (int i = 0; i < num_names; i++) // Find name through itteration
+    {
+        if (streq (name, names[i]))
+        {   
+            retval = 1; // Sets true since name is present
+            break; // No need to continue since we found the name
+        }
+    }
+    return retval;
+}
+
+// --- Symbol table helper function ---
+int symTableLookup (char name[]) //called SymbolTableChecker in documentation
+{
+    for (int i = symCurr - 1; i > 0; i--)
+    {
+        if (streq(name, symbolTable[i].name) && symbolTable[i].mark == 0)
+        {
+            return i; // Return index of symbol in symbol table
+        }
+    }
+    return -1; // Symbol not found
+}
+
+void symTableInsert (int kind, char name[], int val, int level, int addr)
+{
+    if (symCurr < MAX && symTableCheck(name) == -1) // Ensure there is space and name not already present
+    {
+        symbolTable[symCurr].kind = kind;
+        strcpy(symbolTable[symCurr].name, name);
+        symbolTable[symCurr].val = val;
+        symbolTable[symCurr].level = level;
+        symbolTable[symCurr].addr = addr;
+        symbolTable[symCurr].mark = 0; // Mark as in use
+        symCurr++;
+    }
+    else
+    {
+        errorHandling(symTableInsertionFailed); // add to error enum
+    }
+}
+
+int symTableMark (char name [])
+{
+    if (symTableLookup(name) != -1)
+    {
+        symbolTable[symTableLookup(name)].mark = 1; // Mark  as not in use
+        return 0; // Success
+    }
+    else
+    {
+        errorHandling(miscError); // add to error enum
+    }
+}
+
+// --- Parser helper function definitions ---
+
+//<program> ::= <block> "."
+void program ()
+{
+    block(); // Return value of program, default to 0 (no error)
+    
+    if (tokens[pCurr] != periodsym) // Check for periodsym at end of program
+    {
+        errorHandling(periodExpected); // Error: program must end with period
+    }
+
+    pCurr++; //increment iterator
+
+    emit(9,0,3); // HALT
+}
+
+//<block> ::= <const-declaration> <var-declaration> <statement>
+void block ()
+{
+    constDeclaration();
+    int numVars = varDeclaration();
+    emit (6, 0, numVars + 3);
+    statement();
+}
+
+// <const-declaration> ::= [ "const" <ident> "=" <number> { "," <ident> "=" <number> } ";" ]
+void constDeclaration ()
+{
+    // initializing for name and value of symbol
+    char identName[12];
+    int value = 0;
+
+    // if it is a constant
+    if(tokens[pCurr] == constsym)
+    {   
+        // do-while loop
+        do
+        {   
+            // error check for identifier
+            pCurr++;
+            if(tokens[pCurr] != identsym)
+            {
+                errorHandling(identifierExpected);
+            }
+
+            // error check for duplicate symbol
+            if(symbolTableCheck(lexemes[pCurr]) != -1)
+            {
+                errorHandling(duplicateSymbolName);
+            }
+            // getting name of symbol
+            strcpy(identName, lexemes[pCurr++]);
+
+            // error check for certain symbol
+            if(tokens[pCurr] != eqsym)
+            {
+                errorHandling(constantAssignmentSymbolExpected);
+            }
+            pCurr++;
+
+            // error check for number
+            if(tokens[pCurr] != numbersym)
+            {
+                errorHandling(numberExpected);
+            }
+            // getting number
+            value = atoi(lexemes[pCurr]);
+
+            // adding to symbol table
+            symbolTableAdd(1, identName, value, 0, 0);
+            pCurr++;
+        } while (tokens[pCurr] == commasym);
+        // loops if encounters a comma
+        
+        // error check for semicolon
+        if(tokens[pCurr] != semicolonsym)
+        {
+            errorHandling(semicolonExpected);
+        }
+
+        // incrementing counter
+        pCurr++;
+    }
+}
+
+//<var-declaration> ::= [ "var" <ident> { "," <ident> } ";" ]
+int varDeclaration ()
+{
+    // checking if current token is a variable
+    int numVars = 0;
+    if(tokens[pCurr] == varsym)
+    {
+        do
+        {
+            // error check for identifier
+            pCurr++;
+            if(tokens[pCurr] != identsym)
+            {
+                errorHandling(identifierExpected);
+            }
+            // error check for duplicate symbol
+            if(symbolTableCheck(lexemes[pCurr]) != -1)
+            {
+                errorHandling(duplicateSymbolName);
+            }
+            // adding to symbol table
+            symbolTableAdd(2, lexemes[pCurr], 0, 0, numVars + 3);
+            numVars++;
+            pCurr++;
+        } while(tokens[pCurr] == commasym);
+        // looping again if encountering comma
+
+        // error check for semi colon
+        if(tokens[pCurr] != semicolonsym)
+        {
+            errorHandling(semicolonExpected);
+        }
+        pCurr++;
+    }
+    return numVars;
+}
+
+/*
+<statement> ::= [ <ident> ":=" <expression>
+                | "begin" <statement> { ";" <statement> } "end"
+                | "if" <condition> "then" <statement> [ "else" <statement> ] "fi"
+                | "while" <condition> "do" <statement> "od"
+                | "read" <ident>
+                | "write" <expression> ]
+*/
+void statement ()
+{
+    // checking if is identifier
+    if(tokens[pCurr] == identsym)
+    {   
+        // storing index of identifier
+        int symIdx = symbolTableCheck(lexemes[pCurr]);
+
+        // error check for undeclared identifier
+        if(symIdx == -1)
+        {
+            errorHandling(undeclaredIdentifier);
+        }
+        // error check for non-variable
+        if(symbolTable[symIdx].kind != 2)
+        {
+            errorHandling(cannotAlterNonVariable);
+        }
+        pCurr++;
+        
+        // error check for nonconstant identifier
+        if(tokens[pCurr] != becomessym)
+        {
+            errorHandling(nonConstantIdentifierExpected);
+        }
+        pCurr++;
+
+        // parsing and generating code from expression
+        expression();
+        
+        // emitting STO
+        emit(STO, 0, symbolTable[symIdx].addr);
+        return;
+    }
+
+    // checking if were at a beginning
+    if(tokens[pCurr] == beginsym)
+    {   
+        // loop at least once, continue while current token is semi-colon
+        do
+        {
+            pCurr++;
+            // parsing and generating code from statement
+            statement();
+            
+        } while(tokens[pCurr] == semicolonsym);
+
+        // check if token is an ending, error if not
+        if(tokens[pCurr] != endsym)
+        {
+            errorHandling(endExpected);
+        }
+
+        pCurr++;
+        return;
+    }
+
+    // checking if current token is an if
+    if(tokens[pCurr] == ifsym)
+    {
+        // incrementing and parsing and generating code for condition
+        pCurr++;
+        condition();
+
+        // emitting JPC instruction 
+        int jpcIdx = cx;
+        emit(8, 0, 0);
+
+        // error if does not encounter then
+        if(tokens[pCurr] != thensym)
+        {
+            errorHandling(thenExpected);
+        }
+        pCurr++;
+
+        // parsing statement and generating code, then filling in the jump address
+        statement();
+
+        code[jpcIdx].m = cx;
+        return;
+    }
+
+    // checking if encounter while
+    if(tokens[pCurr] == whilesym)
+    {   
+        // incrementing token and saving current index as start of loop
+        pCurr++;
+        int loopIdx = cx;
+
+        // parsing and generating condition and error check for do
+        condition();
+        if(tokens[pCurr] != dosym)
+        {
+            errorHandling(doExpected);
+        }
+
+        // incrementing token 
+        pCurr++;
+
+        // saving current index, and emitting JPC
+        int jpcIdx = cx;
+        emit(JPC, 0, 0);
+
+        // parsing statement and generating code
+        statement();
+
+        // emitting JMP and updating JPC instruction
+        emit(JMP, 0, loopIdx);
+        code[jpcIdx].m = cx;
+        return;
+    }
+
+    // encountering read
+    if(tokens[pCurr] == readsym)
+    {   
+        // incrementing token and error check for identifier
+        pCurr++;
+        if(tokens[pCurr] != identsym)
+        {
+            errorHandling(identifierExpected);
+        }
+
+        // getting index for identifier and error check if undeclared
+        int symIdx = symbolTableCheck(lexemes[pCurr]);
+        if(symIdx == -1)
+        {
+            errorHandling(undeclaredIdentifier);
+        }
+
+        // error check for unalterable variable
+        if(symbolTable[symIdx].kind != 2)
+        {
+            errorHandling(cannotAlterNonVariable);
+        }
+        pCurr++;
+
+        // emitting SYS and STO
+        emit(9, 0, 1);
+        emit(4, 0, symbolTable[symIdx].addr);
+        return;
+    }
+
+    // encountering write
+    if(tokens[pCurr] == writesym)
+    {
+        // incrementing token and parsing and generating code from expression
+        pCurr++;
+        expression();
+
+        // emitting SYS
+        emit(9, 0, 2);
+        return ;
+    }
+}
+
+// <condition> ::= <expression> <rel-op> <expression>
+void condition ()
+{   
+    // parsing and generating code from expression
+    expression();
+
+    // encountering equal
+    if(tokens[pCurr] == eqsym)
+    {   
+        // incrementing token and parsing and generating code from expression
+        pCurr++;
+        expression();
+
+        // emitting EQL
+        emit(2, 0, 8);
+    }
+    // encounter not equal
+    else if(tokens[pCurr] == neqsym)
+    {
+        // incrementing token and parsing and generating code from expression
+        pCurr++;
+        expression();
+
+        // emitting NEQ
+        emit(2, 0, 9);
+    }
+
+    // encountering less than
+    else if(tokens[pCurr] == lessym)
+    {
+        // incrementing token and parsing and generating code from expression
+        pCurr++;
+        expression();
+
+        // emitting LSS
+        emit(2, 0, 10);
+    }
+
+    // encounter less than or equal
+    else if(tokens[pCurr] == leqsym)
+    {
+        // incrementing token and parsing and generating code from expression
+        pCurr++;
+        expression();
+
+        // emitting LEQ
+        emit(2, 0, 11);
+    }
+
+    //  encounter greater than
+    else if(tokens[pCurr] == gtrsym)
+    {
+        // incrementing token and parsing and generating code from expression
+        pCurr++;
+        expression();
+
+        // emitting GTR
+        emit(2, 0, 12);
+    }
+
+    // encounter greater than or equal
+    else if(tokens[pCurr] == geqsym)
+    {
+        // incrementing token and parsing and generating code from expression
+        pCurr++;
+        expression();
+
+        // emitting GEQ
+        emit(2, 0, 13);
+    }
+    // error check for comparator expected
+    else
+    {
+        errorHandling(comparatorExpected);
+    }
+
+}
+
+// <expression> ::= ["-"] <term> { ("+" | "-") <term> }
+void expression ()
+{
+    // parsing and generating code for term
+    term();
+
+    // loop while current token is plus or sym
+    while(tokens[pCurr] == plussym || tokens[pCurr] == minussym)
+    {
+        // if plus
+        if(tokens[pCurr] == plussym)
+        {
+            // incrementing token and parsing and generating code for term
+            pCurr++;
+            term();
+
+            // emitting ADD
+            emit(2, 0, 2);
+        }
+        else
+        {   
+            // incrementing token and parsing and generate code for term
+            pCurr++;
+            term();
+
+            // emitting SUB
+            emit(2, 0, 3);
+        }
+    }
+
+}
+
+// <term> ::= <factor> { ("*" | "/" ) <factor> }
+void term ()
+{   
+    // parsing and generating code for factor
+    factor();
+
+    // loop while current token is mult or div
+    while(tokens[pCurr] == multsym || tokens[pCurr] == slashsym)
+    {
+        // if mult
+        if(tokens[pCurr] == multsym)
+        {
+            // increment token and parse and generate code for factor
+            pCurr++;
+            factor();
+
+            // emitting MUL
+            emit(2, 0, 4);
+        }
+        else
+        {
+            // increment token and parse and generate code for factor
+            pCurr++;
+            factor();
+
+            // emitting DIV
+            emit(2, 0, 5);
+        }
+    }
+}
+
+// <factor> ::= <ident> | <number> | "(" <expression> ")"
+void factor ()
+{
+    // encounter identifier
+    if(tokens[pCurr] == identsym)
+    {   
+        // storing index of identifier
+        int symIdx = symbolTableCheck(lexemes[pCurr]);
+        if(symIdx == -1)
+        {
+            errorHandling(undeclaredIdentifier);
+        }
+        // if identifier is a const
+        if(symbolTable[symIdx].kind == 1)
+        {
+            // emitting LIT
+            emit(1, 0, symbolTable[symIdx].val);
+        }
+
+        // if identifier is var
+        else
+        {
+            // emitting LOD 
+            emit(3, 0, symbolTable[symIdx].addr);
+        }
+        pCurr++;
+    }
+
+    // encountering number
+    else if(tokens[pCurr] == numbersym)
+    {
+        // emitting LIT
+        emit(1, 0, atoi(lexemes[pCurr++]));
+    }
+
+    // encountering left parenthesis
+    else if(tokens[pCurr] == lparentsym)
+    {
+        // incrementing token and parsing and generating code for expression
+        pCurr++;
+        expression();
+
+        // error check for right parenthesis expected
+        if(tokens[pCurr] != rparentsym)
+        {
+            errorHandling(rightParenthesisExpected);
+        }
+        pCurr++;
+    }
+
+    // error check for arithmetic symbol expected
+    else
+    {
+        errorHandling(arithmeticSymbolsExpected);
+    }
+}
+
+// --- Code Generator helper function definitions ---
+
+void emit (int op, int l, int m)
+{
+    printf(fOut, "%d %d %d\n", op, l, m); // Debugging 
+
+
+    if (cx < MAX)
+    {
+        code[cx].op = op;
+        code[cx].l = l;
+        code[cx].m = m;
+        cx++;
+    }
+
+    else
+    {
+        errorHandling(tooManyInstructions); // Error: too many instructions
+    }
+}
+
+// --- Other helper function definitions ---
+
 /*
     - Catches an errorcode thrown by other functions. 
     - Builds a message to print to stdout and elf.txt
@@ -755,7 +1349,7 @@ void errorHandling (int errorCode)
             break;
         }
 
-        case nonConstantIdentiferExpected:
+        case nonConstantIdentifierSymbolExpected:
         {
             strcat(errorMessage, "assignment statements must use :=");
             break;
@@ -815,6 +1409,30 @@ void errorHandling (int errorCode)
             break;
         }
 
+        case symTableInsertionFailed:
+        {
+            strcat(errorMessage, "symbol table insertion failed");
+            break;
+        }
+
+        case symTableLookupFailed:
+        {
+            strcat(errorMessage, "symbol table lookup failed");
+            break;
+        }
+        
+        case symTableMarkFailed:
+        {
+            strcat(errorMessage, "symbol table mark failed");
+            break;
+        }
+        
+        case nonConstantIdentifierExpected:
+        {
+            strcat(errorMessage, "only non-constant identifiers can be assigned a value");
+            break;
+        }
+
         default:
         {
             strcat(errorMessage, "miscellaneour error");
@@ -832,660 +1450,7 @@ void errorHandling (int errorCode)
     exit (errorCode);
 }
 
-// --- Lexical Analyser helper function definitions ---
-
-// Checks if two strings are identical. Returns true or false
-int streq (char stringA [], char stringB []) // String equal? 1 : 0
-{
-    if (strcmp(stringA, stringB) == 0)
-        return 1; //true
-
-    else
-        return 0; //false
-}
-
-// Checks if the name is already in name table.  Returns true or false
-int nameExists (char name [], char names[][500], int num_names) // Name present? 1 : 0
-{
-    int retval = 0; // False by default
-
-    for (int i = 0; i < num_names; i++) // Find name through itteration
-    {
-        if (streq (name, names[i]))
-        {   
-            retval = 1; // Sets true since name is present
-            break; // No need to continue since we found the name
-        }
-    }
-    return retval;
-}
-
-// --- Symbol table helper function ---
-int symTableLookup (char name[]) //called SymbolTableChecker in documentation
-{
-    for (int i = symCurr - 1; i > 0; i--)
-    {
-        if (streq(name, symbolTable[i].name) && symbolTable[i].mark == 0)
-        {
-            return i; // Return index of symbol in symbol table
-        }
-    }
-    return -1; // Symbol not found
-}
-
-int symTableInsert (int kind, char name[], int val, int level, int addr)
-{
-    if (symCurr < MAX_SYMBOL_TABLE_SIZE && symTableCheck(name) == -1) // Ensure there is space and name not already present
-    {
-        symbolTable[symCurr].kind = kind;
-        strcpy(symbolTable[symCurr].name, name);
-        symbolTable[symCurr].val = val;
-        symbolTable[symCurr].level = level;
-        symbolTable[symCurr].addr = addr;
-        symbolTable[symCurr].mark = 0; // Mark as in use
-        symCurr++;
-        return 0; // Success
-    }
-    else
-    {
-        errorHandling(miscError); // add to error enum
-    }
-}
-
-int symTableMark (char name [])
-{
-    if (symTableLookup(name) != -1)
-    {
-        symbolTable[symTableLookup(name)].mark = 1; // Mark  as not in use
-        return 0; // Success
-    }
-    else
-    {
-        errorHandling(miscError); // add to error enum
-    }
-}
-
-// --- Parser helper function definitions ---
-
-//<program> ::= <block> "."
-void program ()
-{
-    block(); // Return value of program, default to 0 (no error)
-    
-    if (tokens[pCurr] != periodsym) // Check for periodsym at end of program
-    {
-        errorHandling(periodExpected); // Error: program must end with period
-    }
-
-    pCurr++; //increment iterator
-
-    emit(9,0,3); // HALT
-}
-
-//<block> ::= <const-declaration> <var-declaration> <statement>
-void block ()
-{
-    constDeclaration();
-    int numVars = varDeclaration();
-    emit (6, 0, numVars + 3);
-    statement();
-}
-
-// <const-declaration> ::= [ "const" <ident> "=" <number> { "," <ident> "=" <number> } ";" ]
-int constDeclaration ()
-{
-    // initializing for name and value of symbol
-    char identName[12];
-    int value = 0;
-
-    // if it is a constant
-    if(tokens[pCurr] == constsym)
-    {   
-        // do-while loop
-        do
-        {   
-            // error check for identifier
-            pCurr++;
-            if(tokens[pCurr] != identsym)
-            {
-                return identifierExpected;
-            }
-
-            // error check for duplicate symbol
-            if(symbolTableCheck(lexemes[pCurr]) != -1)
-            {
-                return duplicateSymbolName;
-            }
-            // getting name of symbol
-            strcpy(identName, lexemes[pCurr++]);
-
-            // error check for certain symbol
-            if(tokens[pCurr] != eqsym)
-            {
-                return constantAssignmentSymbolExpected;
-            }
-            pCurr++;
-
-            // error check for number
-            if(tokens[pCurr] != numbersym)
-            {
-                return numberExpected;
-            }
-            // getting number
-            value = atoi(lexemes[pCurr]);
-
-            // adding to symbol table
-            symbolTableAdd(1, identName, value, 0, 0);
-            pCurr++;
-        } while (tokens[pCurr] == commasym);
-        // loops if encounters a comma
-        
-        // error check for semicolon
-        if(tokens[pCurr] != semicolonsym)
-        {
-            return semicolonExpected;
-        }
-
-        // incrementing counter
-        pCurr++;
-    }
-}
-
-//<var-declaration> ::= [ "var" <ident> { "," <ident> } ";" ]
-int varDeclaration ()
-{
-    // checking if current token is a variable
-    int numVars = 0;
-    if(tokens[pCurr] == varsym)
-    {
-        do
-        {
-            // error check for identifier
-            pCurr++;
-            if(tokens[pCurr] != identsym)
-            {
-                return identifierExpected;
-            }
-            // error check for duplicate symbol
-            if(symbolTableCheck(lexemes[pCurr]) != -1)
-            {
-                return duplicateSymbolName;
-            }
-            // adding to symbol table
-            symbolTableAdd(2, lexemes[pCurr], 0, 0, numVars + 3);
-            numVars++;
-            pCurr++;
-        } while(tokens[pCurr] == commasym);
-        // looping again if encountering comma
-
-        // error check for semi colon
-        if(tokens[pCurr] != semicolonsym)
-        {
-            return semicolonExpected;
-        }
-        pCurr++;
-    }
-    return numVars;
-}
-
-/*
-<statement> ::= [ <ident> ":=" <expression>
-                | "begin" <statement> { ";" <statement> } "end"
-                | "if" <condition> "then" <statement> [ "else" <statement> ] "fi"
-                | "while" <condition> "do" <statement> "od"
-                | "read" <ident>
-                | "write" <expression> ]
-*/
-int statement ()
-{
-    // checking if is identifier
-    if(tokens[pCurr] == identsym)
-    {   
-        // storing index of identifier
-        int symIdx = symbolTableCheck(lexemes[pCurr]);
-
-        // error check for undeclared identifier
-        if(symIdx == -1)
-        {
-            return undeclaredIdentifier;
-        }
-        // error check for non-variable
-        if(symbolTable[symIdx].kind != 2)
-        {
-            return cannotAlterNonVariable;
-        }
-        pCurr++;
-        
-        // error check for nonconstant identifier
-        if(tokens[pCurr] != becomessym)
-        {
-            return nonConstantIdentiferExpected;
-        }
-        pCurr++;
-
-        // parsing and generating code from expression
-        int retval = expression();
-        if(retval != 0)
-        {
-            return retval;
-        }
-
-        // emitting STO
-        emit(STO, 0, symbolTable[symIdx].addr);
-        return 0;
-    }
-
-    // checking if were at a beginning
-    if(tokens[pCurr] == beginsym)
-    {   
-        // loop at least once, continue while current token is semi-colon
-        do
-        {
-            pCurr++;
-            // parsing and generating code from statement
-            int retval = statement();
-            if(retval != 0)
-            {
-                return retval;
-            }
-        } while(tokens[pCurr] == semicolonsym);
-
-        // check if token is an ending, error if not
-        if(tokens[pCurr] != endsym)
-        {
-            return endExpected;
-        }
-
-        pCurr++;
-        return 0;
-    }
-
-    // checking if current token is an if
-    if(tokens[pCurr] == ifsym)
-    {
-        // incrementing and parsing and generating code for condition
-        pCurr++;
-        condition();
-
-        // emitting JPC instruction 
-        int jpcIdx = cx;
-        emit(8, 0, 0);
-
-        // error if does not encounter then
-        if(tokens[pCurr] != thensym)
-        {
-            return thenExpected;
-        }
-        pCurr++;
-
-        // parsing statement and generating code, then filling in the jump address
-        int retval = statement();
-        if(retval != 0)
-        {
-            return retval;
-        }
-
-        code[jpcIdx].m = cx;
-        return 0;
-    }
-
-    // checking if encounter while
-    if(tokens[pCurr] == whilesym)
-    {   
-        // incrementing token and saving current index as start of loop
-        pCurr++;
-        int loopIdx = cx;
-
-        // parsing and generating condition and error check for do
-        condition();
-        if(tokens[pCurr] != dosym)
-        {
-            return doExpected;
-        }
-
-        // incrementing token 
-        pCurr++;
-
-        // saving current index, and emitting JPC
-        int jpcIdx = cx;
-        emit(JPC, 0, 0);
-
-        // parsing statement and generating code
-        int retval = statement();
-        if(retval != 0)
-        {
-            return retval;
-        }
-
-        // emitting JMP and updating JPC instruction
-        emit(JMP, 0, loopIdx);
-        code[jpcIdx].m = cx;
-        return 0;
-    }
-
-    // encountering read
-    if(tokens[pCurr] == readsym)
-    {   
-        // incrementing token and error check for identifier
-        pCurr++;
-        if(tokens[pCurr] != identsym)
-        {
-            return identifierExpected;
-        }
-
-        // getting index for identifier and error check if undeclared
-        int symIdx = symbolTableCheck(lexemes[pCurr]);
-        if(symIdx == -1)
-        {
-            return undeclaredIdentifier;
-        }
-
-        // error check for unalterable variable
-        if(symbolTable[symIdx].kind != 2)
-        {
-            return cannotAlterNonVariable;
-        }
-        pCurr++;
-
-        // emitting SYS and STO
-        emit(9, 0, 1);
-        emit(4, 0, symbolTable[symIdx].addr);
-        return 0;
-    }
-
-    // encountering write
-    if(tokens[pCurr] == writesym)
-    {
-        // incrementing token and parsing and generating code from expression
-        pCurr++;
-        int retval = expression();
-        if(retval != 0)
-        {
-            return retval;
-        }
-
-        // emitting SYS
-        emit(9, 0, 2);
-        return 0;
-    }
-}
-
-// <condition> ::= <expression> <rel-op> <expression>
-int condition ()
-{   
-    // parsing and generating code from expression
-    int retval = expression();
-    if(retval != 0)
-    {
-        return retval;
-    }
-
-    // encountering equal
-    if(tokens[pCurr] == eqsym)
-    {   
-        // incrementing token and parsing and generating code from expression
-        pCurr++;
-        int retval = expression();
-        if(retval != 0)
-        {
-            return retval;
-        }
-
-        // emitting EQL
-        emit(2, 0, 8);
-    }
-    // encounter not equal
-    else if(tokens[pCurr] == neqsym)
-    {
-        // incrementing token and parsing and generating code from expression
-        pCurr++;
-        int retval = expression();
-        if(retval != 0)
-        {
-            return retval;
-        }
-
-        // emitting NEQ
-        emit(2, 0, 9);
-    }
-
-    // encountering less than
-    else if(tokens[pCurr] == lessym)
-    {
-        // incrementing token and parsing and generating code from expression
-        pCurr++;
-        int retval = expression();
-        if(retval != 0)
-        {
-            return retval;
-        }
-
-        // emitting LSS
-        emit(2, 0, 10);
-    }
-
-    // encounter less than or equal
-    else if(tokens[pCurr] == leqsym)
-    {
-        // incrementing token and parsing and generating code from expression
-        pCurr++;
-        int retval = expression();
-        if(retval != 0)
-        {
-            return retval;
-        }
-
-        // emitting LEQ
-        emit(2, 0, 11);
-    }
-
-    //  encounter greater than
-    else if(tokens[pCurr] == gtrsym)
-    {
-        // incrementing token and parsing and generating code from expression
-        pCurr++;
-        int retval = expression();
-        if(retval != 0)
-        {
-            return retval;
-        }
-
-        // emitting GTR
-        emit(2, 0, 12);
-    }
-
-    // encounter greater than or equal
-    else if(tokens[pCurr] == geqsym)
-    {
-        // incrementing token and parsing and generating code from expression
-        pCurr++;
-        int retval = expression();
-        if(retval != 0)
-        {
-            return retval;
-        }
-
-        // emitting GEQ
-        emit(2, 0, 13);
-    }
-    // error check for comparator expected
-    else
-    {
-        return comparatorExpected;
-    }
-
-}
-
-// <expression> ::= ["-"] <term> { ("+" | "-") <term> }
-int expression ()
-{
-    // parsing and generating code for term
-    int retval = term();
-    if(retval != 0)
-    {
-        return retval;
-    }
-
-    // loop while current token is plus or sym
-    while(tokens[pCurr] == plussym || tokens[pCurr] == minussym)
-    {
-        // if plus
-        if(tokens[pCurr] == plussym)
-        {
-            // incrementing token and parsing and generating code for term
-            pCurr++;
-            int retval = term();
-            if(retval != 0)
-            {
-                return retval;
-            }
-
-            // emitting ADD
-            emit(2, 0, 2);
-        }
-        else
-        {   
-            // incrementing token and parsing and generate code for term
-            pCurr++;
-            int retval = term();
-            if(retval != 0)
-            {
-                return retval;
-            }
-
-            // emitting SUB
-            emit(2, 0, 3);
-        }
-    }
-
-}
-
-// <term> ::= <factor> { ("*" | "/" ) <factor> }
-int term ()
-{   
-    // parsing and generating code for factor
-    int retval = factor();
-    if(retval != 0)
-    {
-        return retval;
-    }
-
-    // loop while current token is mult or div
-    while(tokens[pCurr] == multsym || tokens[pCurr] == slashsym)
-    {
-        // if mult
-        if(tokens[pCurr] == multsym)
-        {
-            // increment token and parse and generate code for factor
-            pCurr++;
-            int retval = factor();
-            if(retval != 0)
-            {
-                return retval;
-            }
-
-            // emitting MUL
-            emit(2, 0, 4);
-        }
-        else
-        {
-            // increment token and parse and generate code for factor
-            pCurr++;
-            int retval = factor();
-            if(retval != 0)
-            {
-                return retval;
-            }
-
-            // emitting DIV
-            emit(2, 0, 5);
-        }
-    }
-}
-
-// <factor> ::= <ident> | <number> | "(" <expression> ")"
-int factor ()
-{
-    // encounter identifier
-    if(tokens[pCurr] == identsym)
-    {   
-        // storing index of identifier
-        int symIdx = symbolTableCheck(lexemes[pCurr]);
-        if(symIdx == -1)
-        {
-            return undeclaredIdentifier;
-        }
-        // if identifier is a const
-        if(symbolTable[symIdx].kind == 1)
-        {
-            // emitting LIT
-            emit(1, 0, symbolTable[symIdx].val);
-        }
-
-        // if identifier is var
-        else
-        {
-            // emitting LOD 
-            emit(3, 0, symbolTable[symIdx].addr);
-        }
-        pCurr++;
-    }
-
-    // encountering number
-    else if(tokens[pCurr] == numbersym)
-    {
-        // emitting LIT
-        emit(1, 0, atoi(lexemes[pCurr++]));
-    }
-
-    // encountering left parenthesis
-    else if(tokens[pCurr] == lparentsym)
-    {
-        // incrementing token and parsing and generating code for expression
-        pCurr++;
-        int retval = expression();
-        if(retval != 0)
-        {
-            return retval;
-        }
-
-        // error check for right parenthesis expected
-        if(tokens[pCurr] != rparentsym)
-        {
-            return rightParenthesisExpected;
-        }
-        pCurr++;
-    }
-
-    // error check for arithmetic symbol expected
-    else
-    {
-        return arithmeticSymbolsExpected;
-    }
-}
-
-// --- Code Generator helper function definitions ---
-
-int emit (int op, int l, int m)
-{
-    printf(fOut, "%d %d %d\n", op, l, m); // Debugging 
-
-
-    if (cx < 500)
-    {
-        code[cx].op = op;
-        code[cx].l = l;
-        code[cx].m = m;
-        cx++;
-    }
-
-    else
-    {
-        errorHandling(tooManyInstructions); // Error: too many instructions
-    }
-}
-
-// --- Other helper function definitions ---
+// Gets name of OP code for printing to terminal
 char* getOpName (int op)
 {
     char opName[4];
@@ -1545,7 +1510,7 @@ char* getOpName (int op)
 
         default:
         {    
-            strcpy(opName, "ERR"); // Error: invalid OP code
+            errorHandling(miscError); // add to error enum
             break;
         }
     }
