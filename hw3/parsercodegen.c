@@ -102,8 +102,6 @@ typedef enum errorCode      // Numeric representation of error codes for error h
     rightParenthesisExpected, // right parenthesis must follow left parenthesis
     arithmeticSymbolsExpected, // arithmetic equations must contain operands, parentheses, numbers, or symbols
     tooManyInstructions, // too many instructions for code array
-
-    //to be supported
     symTableInsertionFailed, //failed to insert symbol into symbol table
     symTableMarkFailed, //failed to mark symbol as not in use in symbol table
     symTableLookupFailed, //failed to find symbol in symbol table
@@ -125,6 +123,31 @@ typedef enum opCode         // Numeric representation of opcodes for code genera
     SYS         // system instruction
 
 } opCode;
+
+typedef enum oprCode        // Numeric representation of OPR instructions for code generation
+{
+    RET = 0,    // return
+    NEG,        // negate
+    ADD,        // addition
+    SUB,        // subtraction
+    MUL,        // multiplication
+    DIV,        // division
+    EQL,        // equality check
+    NEQ,        // inequality check
+    LSS,        // less than check
+    LEQ,        // less than or equal to check
+    GTR,        // greater than check
+    GEQ         // greater than or equal to check
+
+} oprCode;
+
+typedef enum sysCode        // Numeric representation of SYS instructions for code generation
+{
+    WRITE = 1,  // write top stack value to output
+    READ,       // read input and push to stack
+    HALT        // halt the program
+
+} sysCode;
 
 typedef struct symbol       // Struct for storing symbol information
 {
@@ -168,7 +191,7 @@ int num_lex = 0;        // Number of lexemes/ tokens scanned
 int num_names = 0;      // Number of names scanned
 int pCurr = 0;          // Index of current token being parsed
 int cx = 0;             // Index of current instruction for code gen
-int symCurr = 0;        // Index of current symbol in symbol table
+int symCurr = 1;        // Index of current symbol in symbol table. Starts at 1 since 0 is sentinel value for symTableLookup failure
 char lexemes[MAX][MAX]; // Array of lexemes
 char names [MAX][MAX];  // Array of names
 FILE *fIn = NULL;       // Points to PL/0 source file
@@ -769,7 +792,7 @@ void program ()
 
     pCurr++; //increment iterator
 
-    emit(9,0,3); // HALT
+    emit(SYS,0,HALT); // HALT
 }
 
 //<block> ::= <const-declaration> <var-declaration> <statement>
@@ -802,7 +825,7 @@ void constDeclaration ()
             }
 
             // error check for duplicate symbol
-            if(symTableLookup(lexemes[pCurr]) != -1)
+            else if(symTableLookup(lexemes[pCurr]) != -1)
             {
                 errorHandling(duplicateSymbolName);
             }
@@ -952,7 +975,7 @@ void statement ()
 
         // emitting JPC instruction 
         int jpcIdx = cx;
-        emit(8, 0, 0);
+        emit(JPC, 0, jpcIdx);
 
         // error if does not encounter then
         if(tokens[pCurr] != thensym)
@@ -987,7 +1010,7 @@ void statement ()
 
         // saving current index, and emitting JPC
         int jpcIdx = cx;
-        emit(JPC, 0, 0);
+        emit(JPC, 0, jpcIdx);
 
         // parsing statement and generating code
         statement();
@@ -1023,8 +1046,8 @@ void statement ()
         pCurr++;
 
         // emitting SYS and STO
-        emit(9, 0, 1);
-        emit(4, 0, symbolTable[symIdx].addr);
+        emit(SYS, 0, READ);
+        emit(STO, 0, symbolTable[symIdx].addr);
         return;
     }
 
@@ -1036,7 +1059,7 @@ void statement ()
         expression();
 
         // emitting SYS
-        emit(9, 0, 2);
+        emit(SYS, 0, WRITE);
         return ;
     }
 }
@@ -1055,7 +1078,7 @@ void condition ()
         expression();
 
         // emitting EQL
-        emit(2, 0, 8);
+        emit(OPR, 0, EQL);
     }
     // encounter not equal
     else if(tokens[pCurr] == neqsym)
@@ -1065,7 +1088,7 @@ void condition ()
         expression();
 
         // emitting NEQ
-        emit(2, 0, 9);
+        emit(OPR, 0, NEQ);
     }
 
     // encountering less than
@@ -1076,7 +1099,7 @@ void condition ()
         expression();
 
         // emitting LSS
-        emit(2, 0, 10);
+        emit(OPR, 0, LSS);
     }
 
     // encounter less than or equal
@@ -1087,7 +1110,7 @@ void condition ()
         expression();
 
         // emitting LEQ
-        emit(2, 0, 11);
+        emit(OPR, 0, LEQ);
     }
 
     //  encounter greater than
@@ -1098,7 +1121,7 @@ void condition ()
         expression();
 
         // emitting GTR
-        emit(2, 0, 12);
+        emit(OPR, 0, GTR);
     }
 
     // encounter greater than or equal
@@ -1109,7 +1132,7 @@ void condition ()
         expression();
 
         // emitting GEQ
-        emit(2, 0, 13);
+        emit(OPR, 0, GEQ);
     }
     // error check for comparator expected
     else
@@ -1136,7 +1159,7 @@ void expression ()
             term();
 
             // emitting ADD
-            emit(2, 0, 2);
+            emit(OPR, 0, ADD);
         }
         else
         {   
@@ -1145,7 +1168,7 @@ void expression ()
             term();
 
             // emitting SUB
-            emit(2, 0, 3);
+            emit(OPR, 0, SUB);
         }
     }
 
@@ -1168,7 +1191,7 @@ void term ()
             factor();
 
             // emitting MUL
-            emit(2, 0, 4);
+            emit(OPR, 0, MUL);
         }
         else
         {
@@ -1177,7 +1200,7 @@ void term ()
             factor();
 
             // emitting DIV
-            emit(2, 0, 5);
+            emit(OPR, 0, DIV);
         }
     }
 }
@@ -1205,7 +1228,7 @@ void factor ()
         else
         {
             // emitting LOD 
-            emit(3, 0, symbolTable[symIdx].addr);
+            emit(LOD, 0, symbolTable[symIdx].addr);
         }
         pCurr++;
     }
@@ -1243,7 +1266,9 @@ void factor ()
 
 void emit (int op, int l, int m)
 {
-    printf("%d %d %d\n", op, l, m); // Debugging 
+    char opName[4];
+    getOpName(op, opName);
+    printf("%s %d %d\n", opName, l, m); // Debugging 
 
 
     if (cx < MAX)
@@ -1270,7 +1295,7 @@ void emit (int op, int l, int m)
 void errorHandling (int errorCode)
 {
     //Variable declaration
-    char errorMessage [550] = "\n --- ERROR: ";
+    char errorMessage [MAX] = "\n --- ERROR: ";
 
     //Error Signaling
     printf("\n********************************");
@@ -1443,6 +1468,7 @@ void errorHandling (int errorCode)
 
     //close error message
     strcat(errorMessage, " ---\n");
+    printf("\n********************************\n\n");
 
     //output to stdio and elf.txt
     printf(errorMessage);

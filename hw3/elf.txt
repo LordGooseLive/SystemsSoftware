@@ -1,2 +1,2 @@
 
- --- ERROR: undeclared identifier ---
+ --- ERROR: begin must be followed by end ---
