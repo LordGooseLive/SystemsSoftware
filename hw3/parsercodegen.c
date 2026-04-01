@@ -144,12 +144,11 @@ typedef struct instruction  // Struct for storing instruction information
 } instruction;
 
 // --- Function prototypes ---
-void errorHandling (int errorCode);             // Catches error code and prints message
 int streq (char stringA [], char stringB []);   // String equal? 1 : 0
 int nameExists (char name [], char names[][MAX], int num_names);    // Name present? 1 : 0
 int symTableLookup (char name[]);               // Checks if symbol is in symbol table and returns index
 void symTableInsert (int kind, char name[], int val, int level, int addr);   // Inserts symbol into symbol table
-int symTableMark (char name []);                // Marks symbol as not in use in symbol table
+void symTableMark (char name []);                // Marks symbol as not in use in symbol table
 void program ();                                // Grammar rule for <program>
 void block ();                                  // Grammar rule for <block>
 void constDeclaration ();                       // Grammar rule for <const-declaration>
@@ -160,6 +159,8 @@ void expression ();                             // Grammar rule for <expression>
 void term ();                                   // Grammar rule for <term>
 void factor ();                                 // Grammar rule for <factor>
 void emit (int op, int l, int m);               // Emits instruction for code gen
+void errorHandling (int errorCode);             // Catches error code and prints message
+void getOpName (int op, char opName[4]);                          // Gets string representation of opcode for printing assembly code
 
 // --- Global Variables ---
 int tokens[MAX];        // Array of tokens
@@ -179,7 +180,6 @@ int main(int argc, char *argv[])
 {
     // Variable declaration and initialisation
     int character = 0;      // Used to parse file 
-    int parseFlag = 0;      // Signals if there is an error during parsing
 
     // --- Validate inputs and output ---
     // Print all command-line arguments
@@ -653,7 +653,9 @@ int main(int argc, char *argv[])
 
     for (int i = 0; i < cx; i++) //loop through code array and print all
     {
-        printf("| %d\t| %s\t|%d\t| %d\t|\n", i, getOpName(code[i].op), code[i].l, code[i].m);
+        char opName[4];
+        getOpName(code[i].op, opName);
+        printf("| %d\t| %s\t|%d\t| %d\t|\n", i, opName, code[i].l, code[i].m);
     }
 
     printf("+------+-----+---+-----+\n\n");
@@ -725,7 +727,7 @@ int symTableLookup (char name[]) //called SymbolTableChecker in documentation
 
 void symTableInsert (int kind, char name[], int val, int level, int addr)
 {
-    if (symCurr < MAX && symTableCheck(name) == -1) // Ensure there is space and name not already present
+    if (symCurr < MAX && symTableLookup(name) == -1) // Ensure there is space and name not already present
     {
         symbolTable[symCurr].kind = kind;
         strcpy(symbolTable[symCurr].name, name);
@@ -741,12 +743,11 @@ void symTableInsert (int kind, char name[], int val, int level, int addr)
     }
 }
 
-int symTableMark (char name [])
+void symTableMark (char name [])
 {
     if (symTableLookup(name) != -1)
     {
         symbolTable[symTableLookup(name)].mark = 1; // Mark  as not in use
-        return 0; // Success
     }
     else
     {
@@ -801,7 +802,7 @@ void constDeclaration ()
             }
 
             // error check for duplicate symbol
-            if(symbolTableCheck(lexemes[pCurr]) != -1)
+            if(symTableLookup(lexemes[pCurr]) != -1)
             {
                 errorHandling(duplicateSymbolName);
             }
@@ -824,7 +825,7 @@ void constDeclaration ()
             value = atoi(lexemes[pCurr]);
 
             // adding to symbol table
-            symbolTableAdd(1, identName, value, 0, 0);
+            symTableInsert(1, identName, value, 0, 0);
             pCurr++;
         } while (tokens[pCurr] == commasym);
         // loops if encounters a comma
@@ -856,12 +857,12 @@ int varDeclaration ()
                 errorHandling(identifierExpected);
             }
             // error check for duplicate symbol
-            if(symbolTableCheck(lexemes[pCurr]) != -1)
+            if(symTableLookup(lexemes[pCurr]) != -1)
             {
                 errorHandling(duplicateSymbolName);
             }
             // adding to symbol table
-            symbolTableAdd(2, lexemes[pCurr], 0, 0, numVars + 3);
+            symTableInsert(2, lexemes[pCurr], 0, 0, numVars + 3);
             numVars++;
             pCurr++;
         } while(tokens[pCurr] == commasym);
@@ -891,7 +892,7 @@ void statement ()
     if(tokens[pCurr] == identsym)
     {   
         // storing index of identifier
-        int symIdx = symbolTableCheck(lexemes[pCurr]);
+        int symIdx = symTableLookup(lexemes[pCurr]);
 
         // error check for undeclared identifier
         if(symIdx == -1)
@@ -1008,7 +1009,7 @@ void statement ()
         }
 
         // getting index for identifier and error check if undeclared
-        int symIdx = symbolTableCheck(lexemes[pCurr]);
+        int symIdx = symTableLookup(lexemes[pCurr]);
         if(symIdx == -1)
         {
             errorHandling(undeclaredIdentifier);
@@ -1188,7 +1189,7 @@ void factor ()
     if(tokens[pCurr] == identsym)
     {   
         // storing index of identifier
-        int symIdx = symbolTableCheck(lexemes[pCurr]);
+        int symIdx = symTableLookup(lexemes[pCurr]);
         if(symIdx == -1)
         {
             errorHandling(undeclaredIdentifier);
@@ -1242,7 +1243,7 @@ void factor ()
 
 void emit (int op, int l, int m)
 {
-    printf(fOut, "%d %d %d\n", op, l, m); // Debugging 
+    printf("%d %d %d\n", op, l, m); // Debugging 
 
 
     if (cx < MAX)
@@ -1451,9 +1452,8 @@ void errorHandling (int errorCode)
 }
 
 // Gets name of OP code for printing to terminal
-char* getOpName (int op)
+void getOpName (int op, char opName[4])
 {
-    char opName[4];
     switch (op)
     {
         case LIT:
@@ -1514,6 +1514,4 @@ char* getOpName (int op)
             break;
         }
     }
-
-    return opName;
 }
