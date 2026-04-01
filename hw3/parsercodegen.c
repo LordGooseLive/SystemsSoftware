@@ -37,7 +37,7 @@ Due Date: See Webcourses for the posted due date and time.
 #include <ctype.h>
 #define MAX_SYMBOL_TABLE_SIZE 500
 
-typedef enum
+typedef enum tokenType
 {
     skipsym = 1,  // Skip / ignore token
     identsym,     // Identifier
@@ -75,7 +75,7 @@ typedef enum
     becomessym    // :=
 } tokenType;
 
-typedef enum
+typedef enum errorCode
 {
     noError = 0,
     miscError, // general error 
@@ -107,7 +107,7 @@ typedef enum
     
 } errorCode;
 
-typedef enum 
+typedef enum opCode
 {
     LIT = 1,    // push literal
     OPR,        // operation code
@@ -139,8 +139,8 @@ typedef struct instruction
 } instruction;
 
 // Global Variables
-FILE *fIn = NULL;      // Points to PL/0 source file
-FILE *fOut = NULL; // Output file with machine code and/ or error message
+FILE *fIn = NULL;       // Points to PL/0 source file
+FILE *fOut = NULL;      // Output file with machine code and/ or error message
 char lexemes[500][500]; // Array of lexemes
 char names [500][500];  // Array of names
 int tokens[500];        // Array of tokens
@@ -148,8 +148,8 @@ int num_lex = 0;        // Number of lexemes/ tokens scanned
 int num_names = 0;      // Number of names scanned
 int pCurr = 0;          // Index of current token being parsed
 symbol symbolTable[MAX_SYMBOL_TABLE_SIZE];
-int symCurr = 0; // Index of current symbol in symbol table
-instruction code[500]; // Array of instructions for code gen
+int symCurr = 0;        // Index of current symbol in symbol table
+instruction code[500];  // Array of instructions for code gen
 int cx = 0; // Index of current instruction for code gen
 
 // Function prototypes
@@ -622,52 +622,44 @@ int main(int argc, char *argv[])
         }
     }
 
-    // --- Parser ---
+    // --- Parser and Code Generator ---
     // A deterministic, recursive-descent parser for PL/0 grammar.
-    // in-progress
-    /*char line[550]; // Stores current line of tokens
-    char add_token[3]; // Stores token to add to line
 
-    for (int i = 0; i < num_lex; i++) // Loop through tokens until we reach periodsym.
+    //Call first Grammar rule to begin parsing and generating code
+    program();
+
+    // --- Print Assembly Code ---
+
+    // print assembly code to terminal
+    printf("Assembly Code:\n");
+    printf("+------+-----+---+-----+\n");
+    printf("| Line\t| OP\t| L\t| M\t|\n");
+    printf("+------+-----+---+-----+\n");
+
+    for (int i = 0; i < cx; i++) //loop through code array and print all
     {
-        if (tokens[i] == periodsym) //periodsym indicates end of programme
-        {
-            break;
-        }
-
-        //clear line and add_token
-        line[0] = '\0';
-        add_token[0] = '\0';
-
-        // Get tokens until semicolonsym is consumed
-        while (i < num_lex && tokens[i] != semicolonsym\
-        {
-            printf("Token: %d, Lexeme: %s\n", tokens[i], lexemes[i]); //for testing
-            sprintf(add_token, "%d ", tokens[i]); // Convert token to string and add space
-            strcat(line, add_token); // Add token to line
-            i++;
-        }
-
-        //determine grammar rule for line
-        if (strcmp(line,""))
-            {}
-    }*/
-
-    // Call first Grammar rule to begin parsing
-    parseFlag = program();// EDIT when function defined
-    if (!parseFlag) // if parseFlag == 0 then no errors
-    {
-        printf("Parsing successful\n");
+        printf("| %d\t| %s\t|%d\t| %d\t|\n", i, getOpName(code[i].op), code[i].l, code[i].m);
     }
 
-    else
-    {
-        errorHandling(parseFlag);
-    }
+    printf("+------+-----+---+-----+\n\n");
 
-    // --- Code Generator ---
-    // Generates PM/0 assembly code
-    // to be implemented
+    //print symbol table to terminal
+    printf("\nSymbol Table:\n");
+    printf("+------+-------------+-------+-------+---------+------+\n");
+    printf("| Kind | Name | Value | Level | Address | Mark |\n");
+    printf("+------+-------------+-------+-------+---------+------+\n");
+
+    for (int i = 0; i < symCurr; i++)
+    {
+        printf("| %d\t| %s\t|%d\t| %d\t| %d\t| %d\t|\n", symbolTable[i].kind, symbolTable[i].name, symbolTable[i].val, symbolTable[i].level, symbolTable[i].addr, symbolTable[i].mark);
+    }
+    printf("+------+-------------+-------+-------+---------+------+\n");
+
+    //print assembly code to elf.txt
+    for (int i = 0; i < cx; i++)
+    {        
+        fprintf(fOut, "%d\t%d\t%d\n", code[i].op, code[i].l, code[i].m);
+    }
 
     // --- Clean up and return ---
     fclose(fIn);
@@ -836,7 +828,7 @@ void errorHandling (int errorCode)
     //output to stdio and elf.txt
     printf(errorMessage);
     fprintf(fOut, errorMessage);
-f
+
     exit (errorCode);
 }
 
@@ -1133,7 +1125,7 @@ int statement ()
             return retval;
         }
 
-        code[jpcIdx].M = cx;
+        code[jpcIdx].m = cx;
         return 0;
     }
 
@@ -1167,7 +1159,7 @@ int statement ()
 
         // emitting JMP and updating JPC instruction
         emit(JMP, 0, loopIdx);
-        code[jpcIdx].M = cx;
+        code[jpcIdx].m = cx;
         return 0;
     }
 
@@ -1258,7 +1250,7 @@ int condition ()
     }
 
     // encountering less than
-    else if(tokens[pCurr] == lessymsym)
+    else if(tokens[pCurr] == lessym)
     {
         // incrementing token and parsing and generating code from expression
         pCurr++;
@@ -1349,7 +1341,7 @@ int expression ()
             }
 
             // emitting ADD
-            emit(2, 0, 2)
+            emit(2, 0, 2);
         }
         else
         {   
@@ -1362,7 +1354,7 @@ int expression ()
             }
 
             // emitting SUB
-            emit(2, 0, 3)
+            emit(2, 0, 3);
         }
     }
 
@@ -1393,7 +1385,7 @@ int term ()
             }
 
             // emitting MUL
-            emit(2, 0, 4)
+            emit(2, 0, 4);
         }
         else
         {
@@ -1406,7 +1398,7 @@ int term ()
             }
 
             // emitting DIV
-            emit(2, 0, 5)
+            emit(2, 0, 5);
         }
     }
 }
@@ -1427,7 +1419,7 @@ int factor ()
         if(symbolTable[symIdx].kind == 1)
         {
             // emitting LIT
-            emit(1, 0, symbolTable[symIdx].value);
+            emit(1, 0, symbolTable[symIdx].val);
         }
 
         // if identifier is var
@@ -1491,4 +1483,72 @@ int emit (int op, int l, int m)
     {
         errorHandling(tooManyInstructions); // Error: too many instructions
     }
+}
+
+// --- Other helper function definitions ---
+char* getOpName (int op)
+{
+    char opName[4];
+    switch (op)
+    {
+        case LIT:
+        {
+            strcpy(opName, "LIT");
+            break;
+        }
+
+        case OPR:
+        {    
+            strcpy(opName, "OPR");
+            break;
+        }
+
+        case LOD:
+        {
+            strcpy(opName, "LOD");
+            break;
+        }
+
+        case STO:
+        {    
+            strcpy(opName, "STO");
+            break;
+        }
+
+        case CAL:
+        {    
+            strcpy(opName, "CAL");
+            break;
+        }
+
+        case INC:
+        {    
+            strcpy(opName, "INC");
+            break;
+        }
+
+        case JMP:
+        {    
+            strcpy(opName, "JMP");
+            break;
+        }
+        case JPC:
+        {    
+            strcpy(opName, "JPC");
+            break;
+        }
+        case SYS:
+        {    
+            strcpy(opName, "SYS");
+            break;
+        }
+
+        default:
+        {    
+            strcpy(opName, "ERR"); // Error: invalid OP code
+            break;
+        }
+    }
+
+    return opName;
 }
