@@ -171,7 +171,7 @@ int streq (char stringA [], char stringB []);   // String equal? 1 : 0
 int nameExists (char name [], char names[][MAX], int num_names);    // Name present? 1 : 0
 int symTableLookup (char name[]);               // Checks if symbol is in symbol table and returns index
 void symTableInsert (int kind, char name[], int val, int level, int addr);   // Inserts symbol into symbol table
-void symTableMark (char name []);                // Marks symbol as not in use in symbol table
+void symTableMark (symbol* sym);                // Marks symbol as not in use in symbol table
 void program ();                                // Grammar rule for <program>
 void block ();                                  // Grammar rule for <block>
 void constDeclaration ();                       // Grammar rule for <const-declaration>
@@ -670,9 +670,9 @@ int main(int argc, char *argv[])
 
     // print assembly code to terminal
     printf("Assembly Code:\n");
-    printf("+------+-----+---+-----+\n");
+    printf("+-------+-------+-------+-------+\n");
     printf("| Line\t| OP\t| L\t| M\t|\n");
-    printf("+------+-----+---+-----+\n");
+    printf("+-------+-------+-------+-------+\n");
 
     for (int i = 0; i < cx; i++) //loop through code array and print all
     {
@@ -681,19 +681,19 @@ int main(int argc, char *argv[])
         printf("| %d\t| %s\t|%d\t| %d\t|\n", i, opName, code[i].l, code[i].m);
     }
 
-    printf("+------+-----+---+-----+\n\n");
+    printf("+-------+-------+-------+-------+\n\n");
 
     //print symbol table to terminal
     printf("\nSymbol Table:\n");
-    printf("+------+-------------+-------+-------+---------+------+\n");
-    printf("| Kind | Name | Value | Level | Address | Mark |\n");
-    printf("+------+-------------+-------+-------+---------+------+\n");
+    printf("+-------+-------+-------+-------+---------------+-------+\n");
+    printf("| Kind\t| Name\t| Value\t| Level\t| Address\t| Mark\t|\n");
+    printf("+-------+-------+-------+-------+---------------+-------+\n");
 
-    for (int i = 0; i < symCurr; i++)
+    for (int i = 1; i < symCurr; i++) //Start at 1 since 0 is sentinel value for symTableLookup failure
     {
-        printf("| %d\t| %s\t|%d\t| %d\t| %d\t| %d\t|\n", symbolTable[i].kind, symbolTable[i].name, symbolTable[i].val, symbolTable[i].level, symbolTable[i].addr, symbolTable[i].mark);
+        printf("| %d\t| %s\t|%d\t| %d\t| %d\t\t| %d\t|\n", symbolTable[i].kind, symbolTable[i].name, symbolTable[i].val, symbolTable[i].level, symbolTable[i].addr, symbolTable[i].mark);
     }
-    printf("+------+-------------+-------+-------+---------+------+\n");
+    printf("+-------+-------+-------+-------+---------------+-------+\n");
 
     //print assembly code to elf.txt
     for (int i = 0; i < cx; i++)
@@ -766,11 +766,11 @@ void symTableInsert (int kind, char name[], int val, int level, int addr)
     }
 }
 
-void symTableMark (char name [])
+void symTableMark (symbol* sym)
 {
-    if (symTableLookup(name) != -1)
+    if (sym != NULL)
     {
-        symbolTable[symTableLookup(name)].mark = 1; // Mark  as not in use
+        sym->mark = 1; // Mark as not in use
     }
     else
     {
@@ -798,10 +798,18 @@ void program ()
 //<block> ::= <const-declaration> <var-declaration> <statement>
 void block ()
 {
+    int startCX = cx; // Store starting index of code for block
+    
     constDeclaration();
     int numVars = varDeclaration();
     emit (6, 0, numVars + 3);
     statement();
+
+    // Mark symbols
+    for (int i = startCX; i < symCurr; i++)
+    {
+        symTableMark(&(symbolTable[i]));
+    }
 }
 
 // <const-declaration> ::= [ "const" <ident> "=" <number> { "," <ident> "=" <number> } ";" ]
@@ -911,6 +919,8 @@ int varDeclaration ()
 */
 void statement ()
 {
+    //printf("Parsing statement at token: %s (Type: %d)\n", lexemes[pCurr], tokens[pCurr]); //debugging statement
+
     // checking if is identifier
     if(tokens[pCurr] == identsym)
     {   
@@ -975,7 +985,7 @@ void statement ()
 
         // emitting JPC instruction 
         int jpcIdx = cx;
-        emit(JPC, 0, jpcIdx);
+        emit(JPC, 0, 0); // M value to be updated later
 
         // error if does not encounter then
         if(tokens[pCurr] != thensym)
@@ -987,7 +997,13 @@ void statement ()
         // parsing statement and generating code, then filling in the jump address
         statement();
 
-        code[jpcIdx].m = cx;
+        if (tokens[pCurr] != fisym)
+        {
+            errorHandling(fiExpected); // Error 14: if-then statement must end with fi [cite: 169]
+        }
+        pCurr++; // Successfully consume 'fi'
+
+        code[jpcIdx].m = cx *3;
         return;
     }
 
@@ -1010,14 +1026,20 @@ void statement ()
 
         // saving current index, and emitting JPC
         int jpcIdx = cx;
-        emit(JPC, 0, jpcIdx);
+        emit(JPC, 0, 0);
 
         // parsing statement and generating code
         statement();
 
+        if(tokens[pCurr] != odsym) 
+        {
+            errorHandling(odExpected); // Missing in your code
+        }
+        pCurr++;
+
         // emitting JMP and updating JPC instruction
         emit(JMP, 0, loopIdx);
-        code[jpcIdx].m = cx;
+        code[jpcIdx].m = cx *3;
         return;
     }
 
@@ -1266,9 +1288,9 @@ void factor ()
 
 void emit (int op, int l, int m)
 {
-    char opName[4];
-    getOpName(op, opName);
-    printf("%s %d %d\n", opName, l, m); // Debugging 
+    //char opName[4];
+    //getOpName(op, opName);
+    //printf("%s %d %d\n", opName, l, m); // Debugging 
 
 
     if (cx < MAX)
@@ -1305,7 +1327,7 @@ void errorHandling (int errorCode)
     {
         case noError:
         {
-            strcat(errorMessage, "programme ran successfully");
+            strcat(errorMessage, " None! Programme ran successfully");
             break;
         }
         
@@ -1468,10 +1490,10 @@ void errorHandling (int errorCode)
 
     //close error message
     strcat(errorMessage, " ---\n");
-    printf("\n********************************\n\n");
 
     //output to stdio and elf.txt
     printf(errorMessage);
+    printf("\n********************************\n\n");
     fprintf(fOut, errorMessage);
 
     exit (errorCode);
