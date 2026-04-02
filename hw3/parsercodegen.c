@@ -78,36 +78,32 @@ typedef enum tokenType      // Numeric representation of token types for scanner
 typedef enum errorCode      // Numeric representation of error codes for error handling
 {
     noError = 0,
-    miscError, // general error 
-    inputNull, //input file read error
-    outputNull, //output file read error
-    skipsymPresent, //lexical analysis error
-
-    // Parsing and Code generation errors:
-    periodExpected, // program must end with period
-    identifierExpected, // const, var, and read keywords must be followed by identifier
-    duplicateSymbolName, //symbol name has already been declared
-    constantAssignmentSymbolExpected, //constants must be assigned with =
-    numberExpected, // constants must be assigned an integer value
-    semicolonExpected, // constant and variable declarations must be followed by a semicolon
-    undeclaredIdentifier, // undeclared identifier
-    cannotAlterNonVariable, // only variable values may be altered
-    nonConstantIdentifierSymbolExpected, // assignment statements must use :=
-    endExpected, // begin must be followed by end
-    thenExpected, // if must be followed by then
-    doExpected, // while must be followed by do
-    odExpected, // do must be followed by od
-    fiExpected, // if-then statement must end with fi
-    comparatorExpected, // condition must contain comparison operator
-    rightParenthesisExpected, // right parenthesis must follow left parenthesis
-    arithmeticSymbolsExpected, // arithmetic equations must contain operands, parentheses, numbers, or symbols
-    tooManyInstructions, // too many instructions for code array
-    symTableInsertionFailed, //failed to insert symbol into symbol table
-    symTableMarkFailed, //failed to mark symbol as not in use in symbol table
-    symTableLookupFailed, //failed to find symbol in symbol table
-    nonConstantIdentifierExpected, // only non-constant identifiers can be assigned a value
-    
-    
+    miscError,                          // general error 
+    inputNull,                          //input file read error
+    outputNull,                         //output file read error
+    skipsymPresent,                     //lexical analysis error
+    periodExpected,                     // program must end with period
+    identifierExpected,                 // const, var, and read keywords must be followed by identifier
+    duplicateSymbolName,                //symbol name has already been declared
+    constantAssignmentSymbolExpected,   //constants must be assigned with =
+    numberExpected,                     // constants must be assigned an integer value
+    semicolonExpected,                  // constant and variable declarations must be followed by a semicolon
+    undeclaredIdentifier,               // undeclared identifier
+    cannotAlterNonVariable,             // only variable values may be altered
+    nonConstantIdentifierSymbolExpected,// assignment statements must use :=
+    endExpected,                        // begin must be followed by end
+    thenExpected,                       // if must be followed by then
+    doExpected,                         // while must be followed by do
+    odExpected,                         // do must be followed by od
+    fiExpected,                         // if-then statement must end with fi
+    comparatorExpected,                 // condition must contain comparison operator
+    rightParenthesisExpected,           // right parenthesis must follow left parenthesis
+    arithmeticSymbolsExpected,          // arithmetic equations must contain operands, parentheses, numbers, or symbols
+    tooManyInstructions,                // too many instructions for code array
+    symTableInsertionFailed,            //failed to insert symbol into symbol table
+    symTableMarkFailed,                 //failed to mark symbol as not in use in symbol table
+    symTableLookupFailed,               //failed to find symbol in symbol table
+    nonConstantIdentifierExpected,      // only non-constant identifiers can be assigned a value
 } errorCode;
 
 typedef enum opCode         // Numeric representation of opcodes for code generation
@@ -126,6 +122,7 @@ typedef enum opCode         // Numeric representation of opcodes for code genera
 
 typedef enum oprCode        // Numeric representation of OPR instructions for code generation
 {
+    //M values for OPP = OPR(2)
     RET = 0,    // return
     NEG,        // negate
     ADD,        // addition
@@ -138,7 +135,6 @@ typedef enum oprCode        // Numeric representation of OPR instructions for co
     LEQ,        // less than or equal to check
     GTR,        // greater than check
     GEQ         // greater than or equal to check
-
 } oprCode;
 
 typedef enum sysCode        // Numeric representation of SYS instructions for code generation
@@ -183,7 +179,7 @@ void term ();                                   // Grammar rule for <term>
 void factor ();                                 // Grammar rule for <factor>
 void emit (int op, int l, int m);               // Emits instruction for code gen
 void errorHandling (int errorCode);             // Catches error code and prints message
-void getOpName (int op, char opName[4]);                          // Gets string representation of opcode for printing assembly code
+void getOpName (int op, char opName[4]);        // Gets string representation of opcode for printing assembly code
 
 // --- Global Variables ---
 int tokens[MAX];        // Array of tokens
@@ -197,7 +193,7 @@ char names [MAX][MAX];  // Array of names
 FILE *fIn = NULL;       // Points to PL/0 source file
 FILE *fOut = NULL;      // Output file with machine code and/ or error message
 instruction code[MAX];  // Array of instructions for code gen
-symbol symbolTable[MAX]; // Array of symbols for symbol table
+symbol symbolTable[MAX];// Array of symbols for symbol table
 
 int main(int argc, char *argv[])
 {
@@ -205,6 +201,7 @@ int main(int argc, char *argv[])
     int character = 0;      // Used to parse file 
 
     // --- Validate inputs and output ---
+
     // Print all command-line arguments
     printf("argc = %d\n", argc);
 
@@ -661,9 +658,10 @@ int main(int argc, char *argv[])
     }
 
     // --- Parser and Code Generator ---
+
     // A deterministic, recursive-descent parser for PL/0 grammar.
 
-    //Call first Grammar rule to begin parsing and generating code
+    //Call highest level Grammar rule to begin parsing and generating code
     program();
 
     // --- Print Assembly Code ---
@@ -674,7 +672,7 @@ int main(int argc, char *argv[])
     printf("| Line\t| OP\t| L\t| M\t|\n");
     printf("+-------+-------+-------+-------+\n");
 
-    for (int i = 0; i < cx; i++) //loop through code array and print all
+    for (int i = 0; i < cx; i++)    // Loop through code array and print all
     {
         char opName[4];
         getOpName(code[i].op, opName);
@@ -689,7 +687,7 @@ int main(int argc, char *argv[])
     printf("| Kind\t| Name\t| Value\t| Level\t| Address\t| Mark\t|\n");
     printf("+-------+-------+-------+-------+---------------+-------+\n");
 
-    for (int i = 1; i < symCurr; i++) //Start at 1 since 0 is sentinel value for symTableLookup failure
+    for (int i = 1; i < symCurr; i++)   // Start at 1 since 0 is sentinel value for symTableLookup failure
     {
         printf("| %d\t| %s\t|%d\t| %d\t| %d\t\t| %d\t|\n", symbolTable[i].kind, symbolTable[i].name, symbolTable[i].val, symbolTable[i].level, symbolTable[i].addr, symbolTable[i].mark);
     }
@@ -702,10 +700,11 @@ int main(int argc, char *argv[])
     }
 
     // --- Clean up and return ---
+
     fclose(fIn);
     fclose(fOut);
-    errorHandling(noError);
-}
+    return 0;   // No errors
+} // End of main
 
 // --- Lexical Analyser helper function definitions ---
 
@@ -717,7 +716,7 @@ int streq (char stringA [], char stringB []) // String equal? 1 : 0
 
     else
         return 0; //false
-}
+} // End of streq()
 
 // Checks if the name is already in name table.  Returns true or false
 int nameExists (char name [], char names[][MAX], int num_names) // Name present? 1 : 0
@@ -733,9 +732,10 @@ int nameExists (char name [], char names[][MAX], int num_names) // Name present?
         }
     }
     return retval;
-}
+} // End of nameExists()
 
 // --- Symbol table helper function ---
+
 int symTableLookup (char name[]) //called SymbolTableChecker in documentation
 {
     for (int i = symCurr - 1; i > 0; i--)
@@ -746,25 +746,25 @@ int symTableLookup (char name[]) //called SymbolTableChecker in documentation
         }
     }
     return -1; // Symbol not found
-}
+} // End of symTableLookup()
 
 void symTableInsert (int kind, char name[], int val, int level, int addr)
 {
-    if (symCurr < MAX && symTableLookup(name) == -1) // Ensure there is space and name not already present
+    if (symCurr < MAX && symTableLookup(name) == -1)    // Ensure there is space and name not already present
     {
         symbolTable[symCurr].kind = kind;
         strcpy(symbolTable[symCurr].name, name);
         symbolTable[symCurr].val = val;
         symbolTable[symCurr].level = level;
         symbolTable[symCurr].addr = addr;
-        symbolTable[symCurr].mark = 0; // Mark as in use
+        symbolTable[symCurr].mark = 0;  // Mark as in use
         symCurr++;
     }
     else
     {
-        errorHandling(symTableInsertionFailed); // add to error enum
+        errorHandling(symTableInsertionFailed);
     }
-}
+} // End of symTableInsert()
 
 void symTableMark (symbol* sym)
 {
@@ -774,7 +774,7 @@ void symTableMark (symbol* sym)
     }
     else
     {
-        errorHandling(miscError); // add to error enum
+        errorHandling(miscError);
     }
 }
 
@@ -822,7 +822,7 @@ void constDeclaration ()
     // if it is a constant
     if(tokens[pCurr] == constsym)
     {   
-        // do-while loop
+        // loop at least once, continue while current token is a comma
         do
         {   
             // error check for identifier
@@ -837,6 +837,7 @@ void constDeclaration ()
             {
                 errorHandling(duplicateSymbolName);
             }
+            
             // getting name of symbol
             strcpy(identName, lexemes[pCurr++]);
 
@@ -845,6 +846,7 @@ void constDeclaration ()
             {
                 errorHandling(constantAssignmentSymbolExpected);
             }
+            
             pCurr++;
 
             // error check for number
@@ -853,13 +855,14 @@ void constDeclaration ()
                 errorHandling(numberExpected);
             }
             // getting number
+
             value = atoi(lexemes[pCurr]);
 
             // adding to symbol table
             symTableInsert(1, identName, value, 0, 0);
             pCurr++;
+
         } while (tokens[pCurr] == commasym);
-        // loops if encounters a comma
         
         // error check for semicolon
         if(tokens[pCurr] != semicolonsym)
@@ -877,6 +880,7 @@ int varDeclaration ()
 {
     // checking if current token is a variable
     int numVars = 0;
+
     if(tokens[pCurr] == varsym)
     {
         do
@@ -887,15 +891,18 @@ int varDeclaration ()
             {
                 errorHandling(identifierExpected);
             }
+
             // error check for duplicate symbol
             if(symTableLookup(lexemes[pCurr]) != -1)
             {
                 errorHandling(duplicateSymbolName);
             }
+
             // adding to symbol table
             symTableInsert(2, lexemes[pCurr], 0, 0, numVars + 3);
             numVars++;
             pCurr++;
+
         } while(tokens[pCurr] == commasym);
         // looping again if encountering comma
 
@@ -904,6 +911,7 @@ int varDeclaration ()
         {
             errorHandling(semicolonExpected);
         }
+
         pCurr++;
     }
     return numVars;
@@ -919,8 +927,6 @@ int varDeclaration ()
 */
 void statement ()
 {
-    //printf("Parsing statement at token: %s (Type: %d)\n", lexemes[pCurr], tokens[pCurr]); //debugging statement
-
     // checking if is identifier
     if(tokens[pCurr] == identsym)
     {   
@@ -932,11 +938,13 @@ void statement ()
         {
             errorHandling(undeclaredIdentifier);
         }
+
         // error check for non-variable
         if(symbolTable[symIdx].kind != 2)
         {
             errorHandling(cannotAlterNonVariable);
         }
+
         pCurr++;
         
         // error check for nonconstant identifier
@@ -944,6 +952,7 @@ void statement ()
         {
             errorHandling(nonConstantIdentifierExpected);
         }
+
         pCurr++;
 
         // parsing and generating code from expression
@@ -1001,6 +1010,7 @@ void statement ()
         {
             errorHandling(fiExpected); // Error 14: if-then statement must end with fi [cite: 169]
         }
+
         pCurr++; // Successfully consume 'fi'
 
         code[jpcIdx].m = cx *3;
@@ -1016,6 +1026,7 @@ void statement ()
 
         // parsing and generating condition and error check for do
         condition();
+
         if(tokens[pCurr] != dosym)
         {
             errorHandling(doExpected);
@@ -1035,6 +1046,7 @@ void statement ()
         {
             errorHandling(odExpected); // Missing in your code
         }
+
         pCurr++;
 
         // emitting JMP and updating JPC instruction
@@ -1102,6 +1114,7 @@ void condition ()
         // emitting EQL
         emit(OPR, 0, EQL);
     }
+
     // encounter not equal
     else if(tokens[pCurr] == neqsym)
     {
@@ -1156,6 +1169,7 @@ void condition ()
         // emitting GEQ
         emit(OPR, 0, GEQ);
     }
+
     // error check for comparator expected
     else
     {
@@ -1183,6 +1197,7 @@ void expression ()
             // emitting ADD
             emit(OPR, 0, ADD);
         }
+
         else
         {   
             // incrementing token and parsing and generate code for term
@@ -1215,6 +1230,7 @@ void term ()
             // emitting MUL
             emit(OPR, 0, MUL);
         }
+
         else
         {
             // increment token and parse and generate code for factor
@@ -1239,6 +1255,7 @@ void factor ()
         {
             errorHandling(undeclaredIdentifier);
         }
+
         // if identifier is a const
         if(symbolTable[symIdx].kind == 1)
         {
@@ -1252,6 +1269,7 @@ void factor ()
             // emitting LOD 
             emit(LOD, 0, symbolTable[symIdx].addr);
         }
+
         pCurr++;
     }
 
@@ -1288,11 +1306,6 @@ void factor ()
 
 void emit (int op, int l, int m)
 {
-    //char opName[4];
-    //getOpName(op, opName);
-    //printf("%s %d %d\n", opName, l, m); // Debugging 
-
-
     if (cx < MAX)
     {
         code[cx].op = op;
@@ -1317,7 +1330,7 @@ void emit (int op, int l, int m)
 void errorHandling (int errorCode)
 {
     //Variable declaration
-    char errorMessage [MAX] = "\n --- ERROR: ";
+    char errorMessage [MAX] = "\n*\t--- ERROR: ";
 
     //Error Signaling
     printf("\n********************************");
@@ -1325,7 +1338,7 @@ void errorHandling (int errorCode)
     //Error detailing
     switch (errorCode)
     {
-        case noError:
+        case noError:    // Should never be called
         {
             strcat(errorMessage, " None! Programme ran successfully");
             break;
@@ -1558,7 +1571,7 @@ void getOpName (int op, char opName[4])
 
         default:
         {    
-            errorHandling(miscError); // add to error enum
+            errorHandling(miscError); 
             break;
         }
     }
