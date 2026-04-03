@@ -1486,9 +1486,9 @@ void errorHandling (int errorCode)
     strcat(errorMessage, " ---\n");
 
     //output to stdio and elf.txt
-    printf(errorMessage);
+    printf("%s",errorMessage);
     printf("\n********************************\n\n");
-    fprintf(fOut, errorMessage);
+    fprintf(fOut, "%s", errorMessage);
 
     exit (errorCode);
 }
