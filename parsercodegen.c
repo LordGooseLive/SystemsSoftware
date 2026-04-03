@@ -467,15 +467,9 @@ int main(int argc, char *argv[])
               temp = fgetc(fIn);
             }
 
-            // has letter flag
-            int hasLetter = 0;
-
             // Error if letter is next to digit
             if(isalpha(temp))
             {
-              // error as there is letter next to number
-              hasLetter = 1;
-
               while(temp != EOF && isalnum(temp))
               {
                 if(counter < 99)
