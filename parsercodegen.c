@@ -467,19 +467,6 @@ int main(int argc, char *argv[])
               temp = fgetc(fIn);
             }
 
-            // Error if letter is next to digit
-            if(isalpha(temp))
-            {
-              while(temp != EOF && isalnum(temp))
-              {
-                if(counter < 99)
-                {
-                  lexemes[num_lex][counter++] = temp;
-                }
-                temp = fgetc(fIn);
-              }
-            }
-
             // Ungetting temp if it was another symbol after number
             if(temp != EOF)
             {
