@@ -987,6 +987,23 @@ void statement ()
         // parsing statement and generating code, then filling in the jump address
         statement();
 
+        int jmpIdx = -1;
+
+        // detecting else statement
+        if(tokens[pCurr] == elsesym)
+        {
+            pCurr++;
+            jmpIdx = cx;
+            emit(JMP, 0, 0);
+            code[jpcIdx].m = cx;
+            statement();
+        }
+        else
+        {
+            code[jpcIdx].m = cx;
+        }
+
+
         if (tokens[pCurr] != fisym)
         {
             errorHandling(fiExpected); // Error 14: if-then statement must end with fi [cite: 169]
@@ -994,7 +1011,10 @@ void statement ()
 
         pCurr++; // Successfully consume 'fi'
 
-        code[jpcIdx].m = cx *3;
+        if(jmpIdx != -1)
+        {
+            code[jmpIdx].m = cx;
+        }
         return;
     }
 
@@ -1032,7 +1052,7 @@ void statement ()
 
         // emitting JMP and updating JPC instruction
         emit(JMP, 0, loopIdx);
-        code[jpcIdx].m = cx *3;
+        code[jpcIdx].m = cx;
         return;
     }
 
@@ -1162,34 +1182,44 @@ void condition ()
 // <expression> ::= ["-"] <term> { ("+" | "-") <term> }
 void expression ()
 {
-    // parsing and generating code for term
-    term();
-
-    // loop while current token is plus or sym
-    while(tokens[pCurr] == plussym || tokens[pCurr] == minussym)
+    // checking for leading negative
+    if(tokens[pCurr] == minussym)
     {
-        // if plus
-        if(tokens[pCurr] == plussym)
+        pCurr++;
+        term();
+        emit(OPR, 0, NEG);
+    }
+    else
+    {
+        // parsing and generating code for term
+        term();
+
+        // loop while current token is plus or sym
+        while(tokens[pCurr] == plussym || tokens[pCurr] == minussym)
         {
-            // incrementing token and parsing and generating code for term
-            pCurr++;
-            term();
+            // if plus
+            if(tokens[pCurr] == plussym)
+            {
+                // incrementing token and parsing and generating code for term
+                pCurr++;
+                term();
 
-            // emitting ADD
-            emit(OPR, 0, ADD);
-        }
+                // emitting ADD
+                emit(OPR, 0, ADD);
+            }
 
-        else
-        {   
-            // incrementing token and parsing and generate code for term
-            pCurr++;
-            term();
+            else
+            {   
+                // incrementing token and parsing and generate code for term
+                pCurr++;
+                term();
 
-            // emitting SUB
-            emit(OPR, 0, SUB);
+                // emitting SUB
+                emit(OPR, 0, SUB);
+            }
         }
     }
-
+    
 }
 
 // <term> ::= <factor> { ("*" | "/" ) <factor> }
