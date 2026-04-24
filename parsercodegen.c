@@ -171,6 +171,7 @@ void symTableMark (symbol* sym);                // Marks symbol as not in use in
 void program ();                                // Grammar rule for <program>
 void block ();                                  // Grammar rule for <block>
 void constDeclaration ();                       // Grammar rule for <const-declaration>
+void procDeclaration();                         // Grammar rule for <procedure-declaration>
 int varDeclaration ();                          // Grammar rule for <var-declaration>
 void statement ();                              // Grammar rule for <statement>
 void condition ();                              // Grammar rule for <condition>
@@ -194,6 +195,7 @@ FILE *fIn = NULL;       // Points to PL/0 source file
 FILE *fOut = NULL;      // Output file with machine code and/ or error message
 instruction code[MAX];  // Array of instructions for code gen
 symbol symbolTable[MAX];// Array of symbols for symbol table
+int currentLevel = 0;   // Index of current level
 
 int main(int argc, char *argv[])
 {
@@ -731,7 +733,14 @@ int symTableLookup (char name[]) //called SymbolTableChecker in documentation
 
 void symTableInsert (int kind, char name[], int val, int level, int addr)
 {
-    if (symCurr < MAX && symTableLookup(name) == -1)    // Ensure there is space and name not already present
+    // ensuring name is not present at current level
+    int symExists = symTableLookup(name);
+    if(symExists != -1 && symbolTable[symExists].level == level)
+    {
+        errorHandling(duplicateSymbolName);
+    }
+
+    if (symCurr < MAX)    // Ensure there is space 
     {
         symbolTable[symCurr].kind = kind;
         strcpy(symbolTable[symCurr].name, name);
@@ -779,17 +788,73 @@ void program ()
 //<block> ::= <const-declaration> <var-declaration> <statement>
 void block ()
 {
-    int startCX = cx; // Store starting index of code for block
+    int startCX = symCurr; // Store starting index of code for block before anything added to symbol table
     
     constDeclaration();
     int numVars = varDeclaration();
-    emit (6, 0, numVars + 3);
+
+    int jmpIdx = cx;
+    emit(JMP, 0, 0);
+
+    // calling procedure declaration (part of hw4)
+    procDeclaration();
+
+    code[jmpIdx].m = cx * 3;
+    emit (INC, 0, numVars + 3);
     statement();
 
     // Mark symbols
     for (int i = startCX; i < symCurr; i++)
     {
-        symTableMark(&(symbolTable[i]));
+        if(symbolTable[i].kind == 2 || symbolTable[i].kind == 3)
+        {
+            symTableMark(&(symbolTable[i]));
+        }
+    }
+}
+
+
+void procDeclaration()
+{
+    // looping while current token is procedure
+    while(tokens[pCurr] == procsym)
+    {
+        // incrementing and checking if current token is identifier
+        pCurr++;
+        if(tokens[pCurr] != identsym)
+        {
+            errorHandling(identifierExpected);
+        }
+
+        // saving name of procedure
+        char nameOfIdent[12];
+        strcpy(nameOfIdent, lexemes[pCurr]);
+
+        // incrementing and checking if token is semicolon
+        pCurr++;
+        if(tokens[pCurr] != semicolonsym)
+        {
+            errorHandling(semicolonExpected);
+        }
+
+        // inserting procedure into symbol table
+        pCurr++;
+        symTableInsert(3, nameOfIdent, 0, currentLevel, cx);
+
+        // incrementing/decrementing for procedure block
+        currentLevel++;
+        block();
+        currentLevel--;
+
+        // emit RTN to return to caller
+        emit(OPR, 0, RET);
+
+        // checking for semicolon
+        if(tokens[pCurr] != semicolonsym)
+        {
+            errorHandling(semicolonExpected);
+        }
+        pCurr++;
     }
 }
 
@@ -813,11 +878,7 @@ void constDeclaration ()
                 errorHandling(identifierExpected);
             }
 
-            // error check for duplicate symbol
-            else if(symTableLookup(lexemes[pCurr]) != -1)
-            {
-                errorHandling(duplicateSymbolName);
-            }
+            // error check for duplicate symbol is in symTableInsert function
             
             // getting name of symbol
             strcpy(identName, lexemes[pCurr++]);
@@ -873,14 +934,10 @@ int varDeclaration ()
                 errorHandling(identifierExpected);
             }
 
-            // error check for duplicate symbol
-            if(symTableLookup(lexemes[pCurr]) != -1)
-            {
-                errorHandling(duplicateSymbolName);
-            }
+            // symbol table duplicate check in symTableInsert function
 
             // adding to symbol table
-            symTableInsert(2, lexemes[pCurr], 0, 0, numVars + 3);
+            symTableInsert(2, lexemes[pCurr], 0, currentLevel, numVars + 3);
             numVars++;
             pCurr++;
 
@@ -987,6 +1044,23 @@ void statement ()
         // parsing statement and generating code, then filling in the jump address
         statement();
 
+        int jmpIdx = -1;
+
+        // detecting else statement
+        if(tokens[pCurr] == elsesym)
+        {
+            pCurr++;
+            jmpIdx = cx;
+            emit(JMP, 0, 0);
+            code[jpcIdx].m = cx;
+            statement();
+        }
+        else
+        {
+            code[jpcIdx].m = cx;
+        }
+
+
         if (tokens[pCurr] != fisym)
         {
             errorHandling(fiExpected); // Error 14: if-then statement must end with fi [cite: 169]
@@ -994,7 +1068,10 @@ void statement ()
 
         pCurr++; // Successfully consume 'fi'
 
-        code[jpcIdx].m = cx *3;
+        if(jmpIdx != -1)
+        {
+            code[jmpIdx].m = cx;
+        }
         return;
     }
 
@@ -1032,7 +1109,7 @@ void statement ()
 
         // emitting JMP and updating JPC instruction
         emit(JMP, 0, loopIdx);
-        code[jpcIdx].m = cx *3;
+        code[jpcIdx].m = cx;
         return;
     }
 
@@ -1162,34 +1239,44 @@ void condition ()
 // <expression> ::= ["-"] <term> { ("+" | "-") <term> }
 void expression ()
 {
-    // parsing and generating code for term
-    term();
-
-    // loop while current token is plus or sym
-    while(tokens[pCurr] == plussym || tokens[pCurr] == minussym)
+    // checking for leading negative
+    if(tokens[pCurr] == minussym)
     {
-        // if plus
-        if(tokens[pCurr] == plussym)
+        pCurr++;
+        term();
+        emit(OPR, 0, NEG);
+    }
+    else
+    {
+        // parsing and generating code for term
+        term();
+
+        // loop while current token is plus or sym
+        while(tokens[pCurr] == plussym || tokens[pCurr] == minussym)
         {
-            // incrementing token and parsing and generating code for term
-            pCurr++;
-            term();
+            // if plus
+            if(tokens[pCurr] == plussym)
+            {
+                // incrementing token and parsing and generating code for term
+                pCurr++;
+                term();
 
-            // emitting ADD
-            emit(OPR, 0, ADD);
-        }
+                // emitting ADD
+                emit(OPR, 0, ADD);
+            }
 
-        else
-        {   
-            // incrementing token and parsing and generate code for term
-            pCurr++;
-            term();
+            else
+            {   
+                // incrementing token and parsing and generate code for term
+                pCurr++;
+                term();
 
-            // emitting SUB
-            emit(OPR, 0, SUB);
+                // emitting SUB
+                emit(OPR, 0, SUB);
+            }
         }
     }
-
+    
 }
 
 // <term> ::= <factor> { ("*" | "/" ) <factor> }
