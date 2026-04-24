@@ -1,27 +1,32 @@
 /*
 Assignment:
-HW3 - Parser and Code Generator for PL/0
+HW4 - Parser/Code Generator Complete Version for PL/0
+      (procedures + lexicographical level management)
 
 Author(s): Arav Tulsi, Latrell Kong
 
 Language: C (only)
 
 To Compile:
-    gcc -O2 -Wall -std=c11 -o parsercodegen parsercodegen.c
+  gcc -O2 -Wall -std=c11 -o parsercodegen_comp parsercodegen_comp.c
 
 To Execute (on Eustis):
-    ./parsercodegen <input_file.txt>
+  ./parsercodegen_comp <input_file.txt>
 
 where:
-    <input_file.txt> is the path to the PL/0 source program
+  <input_file.txt> is the path to the PL/0 source program
 
 Notes:
-    - Single integrated program: scanner + parser + code gen
-    - parsercodegen.c accepts ONE command-line argument
-    - Scanner runs internally (no intermediate token file)
-    - Implements recursive-descent parser for PL/0 grammar
-    - Generates PM/0 assembly code (see Appendix A for ISA)
-    - All development and testing performed on Eustis
+  - Single integrated program: scanner + parser + code gen
+  - parsercodegen_comp.c accepts ONE command-line argument
+  - Scanner runs internally (no intermediate token file)
+  - Implements recursive-descent parser for the full PL/0 grammar
+    including procedure declarations and the call statement
+  - Tracks lexicographical levels (nesting depth) for every symbol
+  - Generates PM/0 assembly code with proper L fields for LOD/STO/CAL
+    and emits CAL/RTN instructions for procedures
+    (see Appendix A for the ISA)
+  - All development and testing performed on Eustis
 
 Class: COP 3402 - Systems Software - Spring 2026
 
