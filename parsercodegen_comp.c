@@ -109,6 +109,7 @@ typedef enum errorCode      // Numeric representation of error codes for error h
     symTableMarkFailed,                 //failed to mark symbol as not in use in symbol table
     symTableLookupFailed,               //failed to find symbol in symbol table
     nonConstantIdentifierExpected,      // only non-constant identifiers can be assigned a value
+    procedureExpected
 } errorCode;
 
 typedef enum opCode         // Numeric representation of opcodes for code generation
@@ -169,9 +170,11 @@ typedef struct instruction  // Struct for storing instruction information
 
 // --- Function prototypes ---
 int streq (char stringA [], char stringB []);   // String equal? 1 : 0
-int nameExists (char name [], char names[][MAX], int num_names);    // Name present? 1 : 0
+int nameExists (char name [], char names[][MAX], 
+    int num_names);                             // Name present? 1 : 0
 int symTableLookup (char name[]);               // Checks if symbol is in symbol table and returns index
-void symTableInsert (int kind, char name[], int val, int level, int addr);   // Inserts symbol into symbol table
+void symTableInsert (int kind, char name[], 
+    int val, int level, int addr);              // Inserts symbol into symbol table
 void symTableMark (symbol* sym);                // Marks symbol as not in use in symbol table
 void program ();                                // Grammar rule for <program>
 void block ();                                  // Grammar rule for <block>
@@ -790,7 +793,7 @@ void program ()
     emit(SYS,0,HALT); // HALT
 }
 
-//<block> ::= <const-declaration> <var-declaration> <statement>
+//<block> ::= <const-declaration> <var-declaration> <procedure-declaration> <statement>
 void block ()
 {
     int startCX = symCurr; // Store starting index of code for block before anything added to symbol table
@@ -818,7 +821,7 @@ void block ()
     }
 }
 
-
+//<procedure-declaration> ::= { "procedure" <indent> ";" <block> ";" }
 void procDeclaration()
 {
     // looping while current token is procedure
@@ -962,6 +965,7 @@ int varDeclaration ()
 
 /*
 <statement> ::= [ <ident> ":=" <expression>
+                | "call" <ident>
                 | "begin" <statement> { ";" <statement> } "end"
                 | "if" <condition> "then" <statement> [ "else" <statement> ] "fi"
                 | "while" <condition> "do" <statement> "od"
@@ -1002,7 +1006,35 @@ void statement ()
         expression();
         
         // emitting STO
-        emit(STO, 0, symbolTable[symIdx].addr);
+        emit(STO, getL(symIdx), symbolTable[symIdx].addr);
+        return;
+    }
+
+    // checking if current token is callsym
+    if (tokens[pCurr] == callsym)
+    {
+        pCurr++; //consume token
+        int idx = symTableLookup(tokens[pCurr]); //get index
+
+        // Handle errors
+        if (tokens[pCurr] != identsym) //ensure token is an identifier
+        {    
+            errorHandling(identifierExpected);
+        }
+
+        if (idx == -1) // ensure token has been declared
+        {
+            errorHandling(undeclaredIdentifier);
+        }
+
+        if (symbolTable[idx].kind != 3) //ensure ident is a procedure
+        {
+            errorHandling(procedureExpected);
+        }
+
+        //emit instruction, consume token and return
+        emit(CAL, getL(idx), symbolTable[idx].addr);
+        pCurr++;
         return;
     }
 
@@ -1110,7 +1142,7 @@ void statement ()
             errorHandling(odExpected); // Missing in your code
         }
 
-        pCurr++;
+        pCurr++; //consume odSym
 
         // emitting JMP and updating JPC instruction
         emit(JMP, 0, loopIdx);
@@ -1144,7 +1176,7 @@ void statement ()
 
         // emitting SYS and STO
         emit(SYS, 0, READ);
-        emit(STO, 0, symbolTable[symIdx].addr);
+        emit(STO, getL(symIdx), symbolTable[symIdx].addr);
         return;
     }
 
@@ -1340,7 +1372,7 @@ void factor ()
         else
         {
             // emitting LOD 
-            emit(LOD, 0, symbolTable[symIdx].addr);
+            emit(LOD, getL(symIdx), symbolTable[symIdx].addr);
         }
 
         pCurr++;
@@ -1394,6 +1426,18 @@ void emit (int op, int l, int m)
 }
 
 // --- Other helper function definitions ---
+
+// Calculates L value where index is the ident's index in the symTable
+int getL (int index)
+{
+    int diff = 0; //const.L always = 0
+
+    //if var or proc, do calculation
+    if (symbolTable[index].kind == 2 || symbolTable[index].kind == 3)
+        diff = currentLevel - symbolTable[index].level;
+
+    return diff;
+}
 
 /*
     - Catches an errorcode thrown by other functions. 
