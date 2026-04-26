@@ -1,0 +1,1 @@
+--- ERROR: procedure declaration must be followed by semicolon ---

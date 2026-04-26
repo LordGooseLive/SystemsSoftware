@@ -1,0 +1,5 @@
+int x;
+procedure y;
+begin
+    call x;
+end.

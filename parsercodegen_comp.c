@@ -109,7 +109,9 @@ typedef enum errorCode      // Numeric representation of error codes for error h
     symTableMarkFailed,                 //failed to mark symbol as not in use in symbol table
     symTableLookupFailed,               //failed to find symbol in symbol table
     nonConstantIdentifierExpected,      // only non-constant identifiers can be assigned a value
-    procedureExpected
+    procedureExpected,                  // procedure call is expected
+    procedureIdentifierExpected,        // procedure call must be followed by procedure identifier
+    procedureSemicolonExpected          // procedure declaration must be followed by semicolon
 } errorCode;
 
 typedef enum opCode         // Numeric representation of opcodes for code generation
@@ -831,7 +833,7 @@ void procDeclaration()
         pCurr++;
         if(tokens[pCurr] != identsym)
         {
-            errorHandling(identifierExpected);
+            errorHandling(procedureIdentifierExpected);
         }
 
         // saving name of procedure
@@ -842,7 +844,7 @@ void procDeclaration()
         pCurr++;
         if(tokens[pCurr] != semicolonsym)
         {
-            errorHandling(semicolonExpected);
+            errorHandling(procedureSemicolonExpected);
         }
 
         // inserting procedure into symbol table
@@ -1029,7 +1031,7 @@ void statement ()
 
         if (symbolTable[idx].kind != 3) //ensure ident is a procedure
         {
-            errorHandling(procedureExpected);
+            errorHandling(procedureIdentifierExpected);
         }
 
         //emit instruction, consume token and return
@@ -1608,6 +1610,24 @@ void errorHandling (int errorCode)
         case nonConstantIdentifierExpected:
         {
             strcat(errorMessage, "only non-constant identifiers can be assigned a value");
+            break;
+        }
+
+        case procedureIdentifierExpected: // item 18 in docs
+        {
+            strcat(errorMessage, "procedure and call must be followed by identifier");
+            break;
+        }
+
+        case procedureSemicolonExpected: // item 19 in docs
+        {
+            strcat(errorMessage, "procedure declaration must be followed by semicolon");
+            break;
+        }
+
+        case procedureExpected: // item 20 in docs
+        {
+            strcat(errorMessage, "call must be followed by a procedure identifier");
             break;
         }
 

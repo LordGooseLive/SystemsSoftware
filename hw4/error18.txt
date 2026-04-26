@@ -1,0 +1,6 @@
+int x;
+procedure;
+begin
+    x = 5;
+    write x;
+end.
