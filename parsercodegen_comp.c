@@ -191,6 +191,7 @@ void factor ();                                 // Grammar rule for <factor>
 void emit (int op, int l, int m);               // Emits instruction for code gen
 void errorHandling (int errorCode);             // Catches error code and prints message
 void getOpName (int op, char opName[4]);        // Gets string representation of opcode for printing assembly code
+int getL (int index);                           // Gets L value for instruction
 
 // --- Global Variables ---
 int tokens[MAX];        // Array of tokens
@@ -1016,7 +1017,7 @@ void statement ()
     if (tokens[pCurr] == callsym)
     {
         pCurr++; //consume token
-        int idx = symTableLookup(tokens[pCurr]); //get index
+        int idx = symTableLookup(lexemes[pCurr]); //get index
 
         // Handle errors
         if (tokens[pCurr] != identsym) //ensure token is an identifier
