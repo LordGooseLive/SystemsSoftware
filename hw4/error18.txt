@@ -1,6 +1,5 @@
-int x;
+var x;
 procedure;
 begin
-    x = 5;
-    write x;
+    x := 5;
 end.

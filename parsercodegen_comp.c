@@ -1032,7 +1032,7 @@ void statement ()
 
         if (symbolTable[idx].kind != 3) //ensure ident is a procedure
         {
-            errorHandling(procedureIdentifierExpected);
+            errorHandling(procedureExpected);
         }
 
         //emit instruction, consume token and return

@@ -1,1 +1,2 @@
---- ERROR: procedure and call must be followed by identifier ---
+
+*   --- ERROR: procedure and call must be followed by identifier ---
